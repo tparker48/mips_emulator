@@ -1,6 +1,9 @@
 # Object files
 *.o
 
+# Python
+*.pyc
+
 # Executable
 mips_sim
 mips_sim.exe
