@@ -3,10 +3,27 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
+// For Forwarding Registers
+struct Forwarding
+{
+    bool flag;
+    uint8_t register_id;
+    uint32_t register_val;
+};
+
+
+// Pipeline Structs
+struct InstructionFetch
+{
+    struct Forwarding forwarding;
+};
+
 struct InstructionDecode
 {
     bool noop;
     uint32_t instruction_word;
+    struct Forwarding forwarding;
 };
 
 struct Execution
@@ -47,16 +64,24 @@ struct WriteBack
     bool write_hilo;
 };
 
+extern struct InstructionFetch IF;
 extern struct InstructionDecode ID;
 extern struct Execution EXE;
 extern struct MemoryAccess MEM;
 extern struct WriteBack WB;
 
+// API
 void run_cycle();
 bool should_exit();
 
+// Pipeline steps
 void instruction_fetch();
 void instruction_decode();
 void execute_instruction();
 void memory_access();
 void write_back();
+
+// Hazard Dection & Control
+void exe_forward();
+void mem_forward();
+bool needs_bubble(uint32_t instruction);

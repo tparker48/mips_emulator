@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 // Instruction opcodes
+#define OP_ZERO  0x00
 #define OP_BEQ   0x04
 #define OP_BNE   0x05
 #define OP_BLEZ  0x06
@@ -54,3 +55,7 @@
 bool is_r_type(uint8_t op_code);
 bool is_j_type(uint8_t op_code);
 bool is_i_type(uint8_t op_code);
+
+bool reads_mem(uint8_t op_code);
+bool writes_hilo(uint8_t op_code, uint8_t funct);
+bool reads_hilo(uint8_t op_code, uint8_t funct);
