@@ -1,0 +1,38 @@
+
+
+
+
+add $v0, $a1, $a0
+
+addu $v0, $a1, $a0
+
+sub $v0, $a1, $a0
+
+
+
+
+
+
+
+
+
+subu $v0, $a1, $a0
+
+and $v0, $a1, $a0
+
+or $v0, $a1, $a0
+xor $v0, $a1, $a0
+nor $v0, $a1, $a0
+
+
+
+
+
+
+
+
+slt $v0, $a1, $a0
+
+sltu $v0, $a1, $a0
+
+

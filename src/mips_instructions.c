@@ -6,7 +6,7 @@ bool is_r_type(uint8_t op_code)
 }
 bool is_j_type(uint8_t op_code)
 {
-    return (op_code == 0x2 || op_code == 0x3);
+    return (op_code == 0x02 || op_code == 0x03);
 }
 bool is_i_type(uint8_t op_code)
 {
