@@ -2,15 +2,6 @@
 
 A MIPS CPU simulator written in C, with a supporting Python assembler for converting MIPS assembly to binary.
 
-## Project Structure
- - include/ # Public headers
- - src/ # C source files
- - tools/ # Python scripts (assembler)
- - tests/ # Sample assembly programs
- - bin/ # Output binaries
- - Makefile # Build script
- - README.md
-
 ## Building
 ```
 make
