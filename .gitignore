@@ -6,7 +6,7 @@ mips_sim
 mips_sim.exe
 
 # Ignore all files in bin/ but not the folder itself
-bin/*
+bin/*.bin
 !bin/.gitkeep
 
 # Optional editor files

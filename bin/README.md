@@ -1,0 +1,1 @@
+MIPS binaries (run with `./mips_sim bin/[file].bin`)
