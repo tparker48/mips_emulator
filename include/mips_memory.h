@@ -19,10 +19,17 @@
 #define STACK_SIZE 2048
 #define STACK_BOTTOM (STACK_START - STACK_SIZE + 1)
 
+#define KERNEL_START 0x80000000
+#define KERNEL_SIZE 2048
+
 extern uint8_t text[];
 extern uint8_t static_data[];
 extern uint8_t stack[];
 extern uint8_t heap[];
+extern uint8_t kernel[];
+
+extern uint32_t kernel_start_addr;
+extern uint32_t kernel_exception_vector_addr;
 
 uint8_t *access_mem_bytes(uint32_t address, int len);
 uint8_t *access_mem_byte(uint32_t address);

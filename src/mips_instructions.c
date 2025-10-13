@@ -1,18 +1,20 @@
 #include "mips_instructions.h"
 
-bool is_r_type(uint8_t op_code)
+bool is_r_instruction(uint8_t op_code)
 {
     return (op_code == 0x00 || op_code == 0x10);
 }
-bool is_j_type(uint8_t op_code)
+bool is_j_instruction(uint8_t op_code)
 {
     return (op_code == 0x02 || op_code == 0x03);
 }
-bool is_i_type(uint8_t op_code)
+bool is_i_instruction(uint8_t op_code)
 {
     return !(is_r_type(op_code) || is_j_type(op_code));
 }
-
+bool is_em_syscall(uint8_t op_code){
+    return op_code == 48;
+}
 
 bool reads_mem(uint8_t op_code)
 {

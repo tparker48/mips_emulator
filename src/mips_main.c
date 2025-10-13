@@ -1,5 +1,6 @@
 
 #include <stdbool.h>
+#include <string.h>
 
 #include "mips_alu.h"
 #include "mips_memory.h"
@@ -19,49 +20,37 @@ void swap_word_endianness(uint32_t* val)
            ((*val >> 24) & 0x000000FF);
 }
 
-void load_program(void *text_bytes, int len)
+void write_program_to_memory(void* program_bytes, int program_size, uint8_t dest[], int dest_size)
 {
     // data should be big-endian
-    if (!system_is_big_endian()){
-        uint32_t* start_addr = (uint32_t*)text_bytes;
-        int word_count = len/sizeof(uint32_t);
+    if (!system_is_big_endian())
+    {
+        uint32_t *start_addr = (uint32_t *)program_bytes;
+        int word_count = program_size / sizeof(uint32_t);
         for (int i = 0; i < word_count; i++)
         {
             swap_word_endianness((start_addr) + i);
         }
     }
-
-    int num_bytes = sizeof(uint8_t) * len;
-    if (num_bytes > TEXT_SIZE)
+    if (program_size > dest_size)
     {
         fprintf(stderr, "Program text length limit exceeded\n");
     }
-    memset(text, 0, TEXT_SIZE);
-    memcpy(text, text_bytes, num_bytes);
-    pc = 0;
-    pc_cap = len;
+    memset(dest, 0, dest_size);
+    memcpy(dest, program_bytes, program_size);
 }
 
-int load_program_from_argv(int argc, char **argv)
-{
+int load_program_from_disk(char* input_file, uint8_t dest[], int dest_size){
     char *buffer;
-    char *input_file;
     long filelen;
     FILE *fptr;
 
-    if (argc < 2)
-    {
-        printf("Usage: ./mips [file]\n");
-        return 1;
-    }
-
     // Open file
-    input_file = argv[1];
     fptr = fopen(input_file, "rb");
     if (fptr == NULL)
     {
-        printf("Error opening file.\n");
-        return 1;
+        printf("Error opening file: %s.\n", input_file);
+        return 0;
     }
 
     // Get file length
@@ -72,42 +61,93 @@ int load_program_from_argv(int argc, char **argv)
     {
         printf("Input file too big!.\n");
         fclose(fptr);
-        return 1;
+        return 0;
     }
 
     // Copy bytes
     buffer = (char *)malloc(filelen * sizeof(char));
     fread(buffer, 1, filelen, fptr);
     fclose(fptr);
-    load_program(buffer, filelen);
+    write_program_to_memory(buffer, filelen, dest, dest_size);
     free(buffer);
 
-    return 0;
+    return filelen;
+}
+
+int parse_kernel_symbol_map(char* mapfile){
+    char *buffer;
+    FILE *fptr;
+    int filelen;
+
+    fptr = fopen(mapfile, "r");
+    if (fptr == NULL){
+        printf("Error loading kernel symbol map %s", mapfile);
+        return 0;
+    }
+
+    char line[128];
+    char name[64];
+    uint32_t addr;
+    kernel_start_addr = 0;
+    kernel_exception_vector_addr = 0;
+    while (fscanf(fptr, "%63s = %x", name, &addr) == 2)
+    {
+        if (strcmp(name, "_start") == 0){
+            kernel_start_addr = addr;
+        }
+        else if (strcmp(name, "exception_vector") == 0)
+        {
+            kernel_exception_vector_addr = addr;
+        }
+    }
+    fclose(fptr);
+
+    if (kernel_start_addr == 0 || kernel_exception_vector_addr == 0)
+    {
+        if (kernel_start_addr == 0)
+            printf("%s did not contain required symbol: _start\n", mapfile);
+        if (kernel_exception_vector_addr == 0)
+            printf("%s did not contain required symbol: exception_vector\n", mapfile);
+        return 0;
+    }
+
+    return 1;
 }
 
 
-/* Test program:
-addu $v0 $a0 $a1   0b000000 00100 00101 00010 00000 100001
-uint32_t program = 0b00000000100001010001000000100100;
-*/
 int main(int argc, char **argv)
 {
-    if (load_program_from_argv(argc, argv) != 0){
+    if (argc < 2)
+    {
+        printf("Usage: ./mips [file]\n");
         return 1;
     }
 
-    // TEMP CODE REMOVE
-    registers[a1] = 5;
-    registers[a2] = 10;
+    if (load_program_from_disk("kernel/kernel.bin", kernel, KERNEL_SIZE) == 0)
+    {
+        return 1;
+    }
+
+    if(parse_kernel_symbol_map("kernel/kernel.map") == 0)
+    {
+        return 1;
+    }
+
+    int program_length = load_program_from_disk(argv[1], text, TEXT_SIZE);
+    if (program_length == 0)
+    {
+        return 1;
+    }
+
+    pc = TEXT_START;
+    pc_cap = program_length;
 
     int cycle = 1;
-    while (!should_exit()) {
+    while (!exited()) {
         run_cycle();
         cycle++;
     }
-
-    // TEMP CODE REMOVE
-    printf("Register $t0:%d",registers[t0]);
+    printf("Exited with code: %d", get_exit_code());
 
     return 0;
 }

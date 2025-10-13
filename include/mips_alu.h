@@ -16,6 +16,7 @@ void srl();
 void sra();
 void jr();
 void jalr();
+void syscall();
 void mfhi();
 void mthi();
 void mflo();

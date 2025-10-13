@@ -72,7 +72,14 @@ extern struct WriteBack WB;
 
 // API
 void run_cycle();
-bool should_exit();
+bool exited();
+void trigger_exit(int code);
+int get_exit_code();
+
+// OS
+void trigger_trap(int pc_store, int cause_code);
+void execute_trap();
+bool pipeline_empty();
 
 // Pipeline steps
 void instruction_fetch();

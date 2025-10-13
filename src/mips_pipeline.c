@@ -10,22 +10,65 @@ struct MemoryAccess MEM;
 struct WriteBack WB;
 
 bool exit_flag = false;
+int exit_code = 0;
+
+bool trap_pending = false;
+uint32_t trap_cause = 0;
+uint32_t trap_pc = 0;
 
 void run_cycle()
 {
+    if (trap_pending && pipeline_empty())
+    {
+        execute_trap();
+    }
+
     write_back();
     memory_access();
     execute_instruction();
     instruction_decode();
     instruction_fetch();
+}
 
-    // TEMP CODE REMOVE THIS
+bool exited()
+{
+    return exit_flag;
+}
+
+void trigger_exit(int code){
+    exit_code = code;
     exit_flag = true;
 }
 
-bool should_exit()
+int get_exit_code()
 {
-    return exit_flag && WB.noop && MEM.noop && EXE.noop && ID.noop;
+    return exit_code;
+}
+
+void trigger_trap(int pc_store, int cause_code)
+{
+    trap_pc = pc_store;
+    trap_cause = cause_code;
+    trap_pending = true;
+}
+
+void execute_trap()
+{
+    // need more logic here to store state?
+    cop0[cause] = trap_cause << 2;
+    cop0[epc] = trap_pc;
+
+    // more state stuff later
+    pc = kernel_exception_handler_addr;
+
+    trap_pending = false;
+    trap_pc = 0;
+    trap_cause = 0;
+}
+
+bool pipeline_empty()
+{
+    return (ID.noop && EXE.noop && MEM.noop && WB.noop);
 }
 
 void instruction_fetch()
@@ -38,7 +81,7 @@ void instruction_fetch()
     }
     IF.forwarding.flag = false;
 
-    if (exit_flag)
+    if (exit_flag || trap_pending)
     {
         ID.noop = true;
         return;
@@ -50,7 +93,7 @@ void instruction_fetch()
         return;
     }
 
-    uint32_t instruction = *(uint32_t *)(&text[pc]);
+    uint32_t instruction = *access_mem_word(pc);
     if (needs_bubble(instruction))
     {
         ID.noop = true;
@@ -105,23 +148,25 @@ void execute_instruction()
     MEM.noop = EXE.noop;
     MEM.op_code = EXE.op_code;
 
-
     if (EXE.noop)
     {
         return;
     }
 
-    if (is_r_type(EXE.op_code))
+    if (is_r_instruction(EXE.op_code))
     {
         execute_r();
     }
-    else if (is_j_type(EXE.op_code))
+    else if (is_j_instruction(EXE.op_code))
     {
         execute_j();
     }
-    else
+    else if (is_i_instruction(EXE.op_code))
     {
         execute_i();
+    }
+    else if (is_em_syscall(EXE.op_code)){
+        execute_em_syscall();
     }
 
     exe_forward();

@@ -14,6 +14,7 @@ void execute_r()
     case FUNC_SRA: sra(); break;
     case FUNC_JR: jr(); break;
     case FUNC_JALR: jalr(); break;
+    case FUNC_SYSCALL: syscall(); break;
     case FUNC_MFHI: mfhi(); break;
     case FUNC_MTHI: mthi(); break;
     case FUNC_MFLO: mflo(); break;
@@ -88,6 +89,11 @@ void jr() {
 void jalr() {
     write_register(ra, pc);
     pc = EXE.rs;
+}
+void syscall(){
+    trigger_trap(pc, 8);
+    MEM.noop = true;
+    ID.noop = true;
 }
 void mfhi() {
 

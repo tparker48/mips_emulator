@@ -1,10 +1,14 @@
 #include "mips_memory.h"
 #include "mips_pipeline.h"
 
-uint8_t text[sizeof(uint8_t) * 2048];
-uint8_t static_data[sizeof(uint8_t) * 4096];
+uint8_t text[sizeof(uint8_t) * TEXT_SIZE];
+uint8_t static_data[sizeof(uint8_t) * STATIC_DATA_SIZE];
 uint8_t stack[sizeof(uint8_t) * STACK_SIZE];
-uint8_t heap[sizeof(uint8_t) * 2048];
+uint8_t heap[sizeof(uint8_t) * HEAP_SIZE];
+uint8_t kernel[sizeof(uint8_t) * KERNEL_SIZE];
+
+uint32_t kernel_start_addr;
+uint32_t kernel_exception_vector_addr;
 
 uint8_t *access_mem_bytes(uint32_t address, int len)
 {
@@ -32,6 +36,10 @@ uint8_t *access_mem_bytes(uint32_t address, int len)
         // stack grows downward
         return &stack[STACK_START - address];
     }
+    else if (address >= KERNEL_START && address_end < KERNEL_START + KERNEL_SIZE)
+    {
+        return &kernel[address-KERNEL_START];
+    }
     else
     {
         fprintf(stderr, "Segmentation fault at 0x%08x\n", address);
@@ -43,9 +51,11 @@ uint8_t *access_mem_byte(uint32_t address){
     return access_mem_bytes(address, 1);
 }
 uint16_t *access_mem_halfword(uint32_t address){
+    assert((address & 0b1) == 0);
     return (uint16_t *)access_mem_bytes(address, 2);
 }
 uint32_t *access_mem_word(uint32_t address){
+    assert((address & 0b11) == 0);
     return (uint32_t*)access_mem_bytes(address, 4);
 }
 
