@@ -4,6 +4,8 @@
     - Emulates full MIPS 5-stage pipeline (IF, ID, EXE, MEM, WB)
     - Forwarding and bubble insertion for RAW hazards
     - Interrupt handling (WIP)
+    - Full instruction set support (WIP)
+    - Debugging (WIP)
 
  - MIPS assembler written in Python
     - Writes assembly files (.s/.asm) to binary (.bin) (big endian)
