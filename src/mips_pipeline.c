@@ -18,6 +18,9 @@ void run_cycle()
     execute_instruction();
     instruction_decode();
     instruction_fetch();
+
+    // TEMP CODE REMOVE THIS
+    exit_flag = true;
 }
 
 bool should_exit()
@@ -101,6 +104,7 @@ void execute_instruction()
 {
     MEM.noop = EXE.noop;
     MEM.op_code = EXE.op_code;
+
 
     if (EXE.noop)
     {

@@ -15,12 +15,12 @@ This produces the executable mips_sim (or mips_sim.exe on Windows).
 1. Assemble a MIPS program using the Python assembler:
 
 ```
-todo
+python -m tools.assembler.mips_assembler [assembly_file].s -o [output_file].bin --verbose
 ```
 
 2. Run the simulator
 ```
-./mips_sim bin/hello.bin
+./mips_sim bin/[filename].bin
 ```
 
 ## Running Tests

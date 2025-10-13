@@ -10,9 +10,9 @@ class Instruction:
         self.shamt = int(shamt, 0) if shamt else 0
         self.immediate = int(immediate, 0) if immediate else 0
         self.address = int(address, 0) if address else 0
-        self.rd = self.reg_map(rd) if rd else 0
         self.rs = self.reg_map(rs) if rs else 0
         self.rt = self.reg_map(rt) if rt else 0
+        self.rd = self.reg_map(rd) if rd else 0
         
     def bytes(self) -> bytes:
         if (self.op_code in [0x00, 0x10]):
@@ -45,3 +45,12 @@ class Instruction:
     
     def reg_map(self, reg: str) -> int:
         return Registers[reg.strip('$')].value
+    
+    def __str__(self) -> str:
+        if (self.op_code in [0x00, 0x10]):
+            return f'R[op:{self.op_code} | rs:{self.rs} | rt:{self.rt} | rd:{self.rd} | shampt:{self.shamt} | funct:{self.funct}]'
+        elif (self.op_code in [0x02, 0x03]):
+            return f'J[op:{self.op_code} | addr:{self.address}]'
+        else:
+            return f'I[op:{self.op_code} | rd:{self.rs} | rs:{self.rt} | imm:{self.immediate} ]'
+        

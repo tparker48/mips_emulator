@@ -5,9 +5,32 @@
 #include "mips_memory.h"
 #include "mips_pipeline.h"
 
+bool system_is_big_endian(){
+    uint16_t dummy_halfword = 0x00FF;
+    char *byte_ptr = (char *)&dummy_halfword;
+    return (*byte_ptr == 0x00);
+}
+
+void swap_word_endianness(uint32_t* val)
+{
+    *val = ((*val << 24) & 0xFF000000) |
+           ((*val << 8)  & 0x00FF0000) |
+           ((*val >> 8)  & 0x0000FF00) |
+           ((*val >> 24) & 0x000000FF);
+}
 
 void load_program(void *text_bytes, int len)
 {
+    // data should be big-endian
+    if (!system_is_big_endian()){
+        uint32_t* start_addr = (uint32_t*)text_bytes;
+        int word_count = len/sizeof(uint32_t);
+        for (int i = 0; i < word_count; i++)
+        {
+            swap_word_endianness((start_addr) + i);
+        }
+    }
+
     int num_bytes = sizeof(uint8_t) * len;
     if (num_bytes > TEXT_SIZE)
     {
@@ -73,9 +96,18 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // TEMP CODE REMOVE
+    registers[a1] = 5;
+    registers[a2] = 10;
+
+    int cycle = 1;
     while (!should_exit()) {
         run_cycle();
+        cycle++;
     }
+
+    // TEMP CODE REMOVE
+    printf("Register $t0:%d",registers[t0]);
 
     return 0;
 }
