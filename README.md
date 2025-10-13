@@ -2,11 +2,11 @@
 
  - A MIPS CPU emulator written in C
     - Emulates full MIPS 5-stage pipeline (IF, ID, EXE, MEM, WB)
-    - Forwarding and Bubble Insertion for RAW hazards
+    - Forwarding and bubble insertion for RAW hazards
     - Interrupt handling (WIP)
 
  - MIPS assembler written in Python
-    - Writes assembly files (text) to binary (big endian)
+    - Writes assembly files (.s/.asm) to binary (.bin) (big endian)
 
 ## Building
 ```
