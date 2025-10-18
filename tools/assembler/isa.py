@@ -1,68 +1,87 @@
 from typing import Final, Callable
+from enum import Enum
 
-from tools.assembler.instruction import Instruction
+class InstructionType(Enum):
+    R_TYPE = 0
+    I_TYPE = 1
+    J_TYPE = 2
+    PSEUDO = 3
 
-from tools.assembler.parsers import (
-    parse_rd_rs_rt,
-    parse_rd_rt_shamt,
-    parse_rs,
-    parse_rd,
-    parse_rs_rt,
-    parse_rt_rs_imm,
-    parse_rt_imm,
-    parse_rt_offset_rs,
-    parse_label,
-    parse_rs_rt_label,
-    parse_rd_rs,
-    parse_rs_label,
-    parse_jalr
-)
+class InstructionData:
+    op_code: int = None
+    funct_code:int = None
+    instruction_type: InstructionType = None
+    def __init__(self, instruction_type: InstructionType, op_code: int, funct_code: int = None):
+        self.op_code = op_code
+        self.instruction_type = instruction_type
+        self.funct_code = funct_code
 
-OPCODES : Final[dict[str, int]] = {
-    'sll':   0x00,
-    'srl':   0x00,
-    'sra':   0x00,
-    'jr':    0x00,
-    'jalr':  0x00,
-    'mfhi':  0x00,
-    'mthi':  0x00,
-    'mflo':  0x00,
-    'mtlo':  0x00,
-    'mult':  0x00,
-    'multu': 0x00,
-    'div':   0x00,
-    'divu':  0x00,
-    'add':   0x00,
-    'addu':  0x00,
-    'sub':   0x00,
-    'subu':  0x00,
-    'and':   0x00,
-    'or':    0x00,
-    'xor':   0x00,
-    'nor':   0x00,
-    'slt':   0x00,
-    'sltu':  0x00,
-    'beq':   0x04,
-    'bne':   0x05,
-    'blez':  0x06,
-    'bgtz':  0x07,
-    'addi':  0x08,
-    'addiu': 0x09,
-    'slti':  0x0A,
-    'sltiu': 0x0B,
-    'andi':  0x0C,
-    'ori':   0x0D,
-    'lui':   0x0F,
-    'lb':    0x20, 
-    'lh':    0x21, 
-    'lw':    0x23, 
-    'lbu':   0x24,
-    'lhu':   0x25,
-    'sb':    0x28,
-    'sh':    0x29,
-    'sw':    0x2B,
-    'j':     0x02,
-    'jal':   0x03,
+INSTRUCTIONS : Final[dict[str, int]] = {
+    'sll':   InstructionData(InstructionType.R_TYPE, 0x00, 0x00),
+    'srl':   InstructionData(InstructionType.R_TYPE, 0x00, 0x02),
+    'sra':   InstructionData(InstructionType.R_TYPE, 0x00, 0x03),
+    'jr':    InstructionData(InstructionType.R_TYPE, 0x00, 0x08),
+    'jalr':  InstructionData(InstructionType.R_TYPE, 0x00, 0x09),
+    'mfhi':  InstructionData(InstructionType.R_TYPE, 0x00, 0x10),
+    'mthi':  InstructionData(InstructionType.R_TYPE, 0x00, 0x11),
+    'mflo':  InstructionData(InstructionType.R_TYPE, 0x00, 0x12),
+    'mtlo':  InstructionData(InstructionType.R_TYPE, 0x00, 0x13),
+    'mult':  InstructionData(InstructionType.R_TYPE, 0x00, 0x18),
+    'multu': InstructionData(InstructionType.R_TYPE, 0x00, 0x19),
+    'div':   InstructionData(InstructionType.R_TYPE, 0x00, 0x1A),
+    'divu':  InstructionData(InstructionType.R_TYPE, 0x00, 0x1B),
+    'add':   InstructionData(InstructionType.R_TYPE, 0x00, 0x20),
+    'addu':  InstructionData(InstructionType.R_TYPE, 0x00, 0x21),
+    'sub':   InstructionData(InstructionType.R_TYPE, 0x00, 0x22),
+    'subu':  InstructionData(InstructionType.R_TYPE, 0x00, 0x23),
+    'and':   InstructionData(InstructionType.R_TYPE, 0x00, 0x24),
+    'or':    InstructionData(InstructionType.R_TYPE, 0x00, 0x25),
+    'xor':   InstructionData(InstructionType.R_TYPE, 0x00, 0x26),
+    'nor':   InstructionData(InstructionType.R_TYPE, 0x00, 0x27),
+    'slt':   InstructionData(InstructionType.R_TYPE, 0x00, 0x2A),
+    'sltu':  InstructionData(InstructionType.R_TYPE, 0x00, 0x2B),
+
+    'beq':   InstructionData(InstructionType.I_TYPE, 0x04),
+    'bne':   InstructionData(InstructionType.I_TYPE, 0x05),
+    'blez':  InstructionData(InstructionType.I_TYPE, 0x06),
+    'bgtz':  InstructionData(InstructionType.I_TYPE, 0x07),
+    'addi':  InstructionData(InstructionType.I_TYPE, 0x08),
+    'addiu': InstructionData(InstructionType.I_TYPE, 0x09),
+    'slti':  InstructionData(InstructionType.I_TYPE, 0x0A),
+    'sltiu': InstructionData(InstructionType.I_TYPE, 0x0B),
+    'andi':  InstructionData(InstructionType.I_TYPE, 0x0C),
+    'ori':   InstructionData(InstructionType.I_TYPE, 0x0D),
+    'lui':   InstructionData(InstructionType.I_TYPE, 0x0F),
+    'lb':    InstructionData(InstructionType.I_TYPE, 0x20), 
+    'lh':    InstructionData(InstructionType.I_TYPE, 0x21), 
+    'lw':    InstructionData(InstructionType.I_TYPE, 0x23), 
+    'lbu':   InstructionData(InstructionType.I_TYPE, 0x24),
+    'lhu':   InstructionData(InstructionType.I_TYPE, 0x25),
+    'sb':    InstructionData(InstructionType.I_TYPE, 0x28),
+    'sh':    InstructionData(InstructionType.I_TYPE, 0x29),
+    'sw':    InstructionData(InstructionType.I_TYPE, 0x2B),
+
+    'j':     InstructionData(InstructionType.J_TYPE, 0x02),
+    'jal':   InstructionData(InstructionType.J_TYPE, 0x03),
+}
+
+PSEUDOINSTRUCTIONS = {
+    'move',
+    'neg',
+    'not',
+    'clear',
+
+    'la',
+    'li',
+
+    'b',
+    'beqz',
+    'bnez',
+
+    'push',
+    'pop',
+
+    'nop'
 }
 
 FUNCTS : Final[dict[str, int]] = {
@@ -89,51 +108,4 @@ FUNCTS : Final[dict[str, int]] = {
     'nor':   0x27,
     'slt':   0x2A,
     'sltu':  0x2B,
-}
-
-INSTRUCTION_PARSERS: Final[dict[str, Callable[[str], Instruction]]] = {
-    'sll':   parse_rd_rt_shamt,
-    'srl':   parse_rd_rt_shamt,
-    'sra':   parse_rd_rt_shamt,
-    'jr':    parse_rs,
-    'jalr':  parse_jalr,
-    'mfhi':  parse_rd,
-    'mthi':  parse_rs,
-    'mflo':  parse_rd,
-    'mtlo':  parse_rs,
-    'mult':  parse_rs_rt,
-    'multu': parse_rs_rt,
-    'div':   parse_rs_rt,
-    'divu':  parse_rs_rt,
-    'add':   parse_rd_rs_rt,
-    'addu':  parse_rd_rs_rt,
-    'sub':   parse_rd_rs_rt,
-    'subu':  parse_rd_rs_rt,
-    'and':   parse_rd_rs_rt,
-    'or':    parse_rd_rs_rt,
-    'xor':   parse_rd_rs_rt,
-    'nor':   parse_rd_rs_rt,
-    'slt':   parse_rd_rs_rt,
-    'sltu':  parse_rd_rs_rt,
-    'beq':   parse_rs_rt_label,
-    'bne':   parse_rs_rt_label,
-    'blez':  parse_rs_label,
-    'bgtz':  parse_rs_label,
-    'addi':  parse_rt_rs_imm,
-    'addiu': parse_rt_rs_imm,
-    'slti':  parse_rt_rs_imm,
-    'sltiu': parse_rt_rs_imm,
-    'andi':  parse_rt_rs_imm,
-    'ori':   parse_rt_rs_imm,
-    'lui':   parse_rt_imm,
-    'lb':    parse_rt_offset_rs, 
-    'lh':    parse_rt_offset_rs, 
-    'lw':    parse_rt_offset_rs, 
-    'lbu':   parse_rt_offset_rs,
-    'lhu':   parse_rt_offset_rs,
-    'sb':    parse_rt_offset_rs,
-    'sh':    parse_rt_offset_rs,
-    'sw':    parse_rt_offset_rs,
-    'j':     parse_label,
-    'jal':   parse_label,
 }
