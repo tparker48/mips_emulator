@@ -2,7 +2,9 @@
 *.o
 
 # Python
+__pycache__/
 *.pyc
+.venv
 
 # Executable
 mips_sim

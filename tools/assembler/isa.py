@@ -109,3 +109,9 @@ FUNCTS : Final[dict[str, int]] = {
     'slt':   0x2A,
     'sltu':  0x2B,
 }
+
+
+ADDRESS_OFFSETS = {
+    '.text': 0x00400000,
+    '.data': 0x10000000
+}

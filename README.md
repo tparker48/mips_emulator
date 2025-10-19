@@ -10,33 +10,47 @@
  - MIPS assembler written in Python
     - Writes assembly files (.s/.asm) to binary (.bin) (big endian)
 
+
+
+# Assembler: Generating Machine Code from MIPS Assembly
+---
+
+## Requirements
+
+- **Python 3.10+**
+- **sly** (Sly Lex-Yacc) - used for lexing and parsing
+
+```bash
+pip install -r requirements.txt
+```
+## Running the Assembler
+```
+TODO
+```
+
+# CPU Emulator: Execute MIPS Machine Code
+---
 ## Building
 ```
 make
 ```
 This produces the executable mips_sim (or mips_sim.exe on Windows).
 
-
-
-## Running the Simulator
-
-1. Assemble a MIPS program using the Python assembler:
-
-```
-python -m tools.assembler.mips_assembler [assembly_file].s -o [output_file].bin --verbose
-```
-
-2. Run the simulator
-```
-./mips_sim bin/[filename].bin
-```
-
-## Running Tests
-```
-python -m tests.test_runner
-```
-
-## Cleaning Build Files
+Clean with:
 ```
 make clean
+```
+
+## Running
+
+Run an assembled binary with:
+```
+./mips_sim [my_mips_binary]
+```
+
+# Running Tests
+---
+Run tests with:
+```
+python -m tests.test_runner
 ```

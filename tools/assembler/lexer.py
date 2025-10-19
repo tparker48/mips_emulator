@@ -3,12 +3,8 @@ from sly import Lexer
 from tools.assembler.isa import INSTRUCTIONS, PSEUDOINSTRUCTIONS
 
 class MIPSLexer(Lexer):
-    # String containing ignored characters between tokens
-    ignore = ' \t'
-
     labels = set()
-
-    # Set of token names.   This is always required
+    ignore = ' \t'
     tokens = {
         REGISTER,
         ID,
@@ -36,11 +32,10 @@ class MIPSLexer(Lexer):
         BINARY
     }
 
-    # Regular expression rules for tokens
+    # Token REGEX
     REGISTER = r'\$[a-zA-Z_]*[a-zA-Z0-9_]*'
     LABEL_DEFINE = r'[a-zA-Z_][a-zA-Z0-9_]*\:'
     ID      = r'[a-zA-Z_][a-zA-Z0-9_]*'
-
     TEXT = '.text'
     DATA = '.data'
     WORD = '.word'
@@ -50,8 +45,6 @@ class MIPSLexer(Lexer):
     ASCII = '.ascii'
     SPACE = '.space'
     ALIGN = '.align'
-
-    # DECIMAL = r'\d+\.\d+'
     HEX = r'(0x)(a-fA-F|\d)+'
     BINARY = r'(0b)(1|0)+'
     INTEGER  = r'\d+'
@@ -63,6 +56,7 @@ class MIPSLexer(Lexer):
     NEWLINE = r'\n+'
     COMMENT = r'\#[^\n]*'
 
+    # Populate set of labels for symbol table
     @_(r'[a-zA-Z_][a-zA-Z0-9_]*\:')
     def LABEL_DEFINE(self, t):
         label = t.value.strip(':')
@@ -70,6 +64,7 @@ class MIPSLexer(Lexer):
         self.labels.add(label)
         return t
     
+    # Detect instructions vs pseudos
     @_(r'[a-zA-Z_][a-zA-Z0-9_]*')
     def ID(self, t):
         if t.value in INSTRUCTIONS:
@@ -78,13 +73,14 @@ class MIPSLexer(Lexer):
             t.type = 'PSEUDO_MNEMONIC'
         return t
     
+    # Ignore Comments
     @_(r'\#[^\n]*')
     def COMMENT(self, t):
         return None
 
-    # Define a rule so we can track line numbers
-    # start at -1 to account for our preprocessing adding '.text\n'
+    # Track line numbers
     @_(r'\n+')
     def NEWLINE(self, t):
         self.lineno += len(t.value)
         return t
+    
