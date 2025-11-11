@@ -2,7 +2,7 @@ import struct
 import os
 
 def assemble_binary(asm_file: str, bin_file: str):
-    os.system(f'python -m tools.assembler {asm_file} -o {bin_file}')
+    os.system(f'python -m assembler {asm_file} -o {bin_file}')
 
 def check_assembler_output(binary_file: str, reference_file: str):
     success = True

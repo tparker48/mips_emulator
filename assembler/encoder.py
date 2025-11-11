@@ -1,4 +1,4 @@
-from tools.assembler.instruction_encoders import INSTRUCTION_ENCODERS
+from assembler.instruction_encoders import INSTRUCTION_ENCODERS
 
 def encode_binary(ir_data: dict) -> bytearray:
     # 1st word: TEXT length

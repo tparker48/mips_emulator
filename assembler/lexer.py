@@ -1,6 +1,6 @@
 from sly import Lexer
 
-from tools.assembler.isa import INSTRUCTIONS, PSEUDOINSTRUCTIONS
+from assembler.isa import INSTRUCTIONS, PSEUDOINSTRUCTIONS
 
 class MIPSLexer(Lexer):
     labels = set()

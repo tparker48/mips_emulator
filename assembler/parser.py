@@ -1,6 +1,6 @@
 from sly import Parser
-from tools.assembler.lexer import MIPSLexer
-from tools.assembler.isa import INSTRUCTIONS, InstructionData
+from assembler.lexer import MIPSLexer
+from assembler.isa import INSTRUCTIONS, InstructionData
 
 class MIPSParser(Parser):
     tokens = MIPSLexer.tokens

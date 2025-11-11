@@ -1,4 +1,4 @@
-from tools.assembler.isa import INSTRUCTIONS
+from assembler.isa import INSTRUCTIONS
 
 def expand_la(ir: dict) -> list[dict]:
     if 'label' not in ir:

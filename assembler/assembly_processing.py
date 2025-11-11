@@ -1,7 +1,7 @@
-from tools.assembler.pseudo_expansion import PSEUDO_EXPANDERS
-from tools.assembler.data_expansion import DATA_EXPANDERS
-from tools.assembler.isa import ADDRESS_OFFSETS
-from tools.assembler.symbol_table import create_symbol_table, resolve_symbol
+from assembler.pseudo_expansion import PSEUDO_EXPANDERS
+from assembler.data_expansion import DATA_EXPANDERS
+from assembler.isa import ADDRESS_OFFSETS
+from assembler.symbol_table import create_symbol_table, resolve_symbol
 
 
 def preprocess(lines: str) -> str:

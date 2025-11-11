@@ -1,4 +1,4 @@
-from tools.assembler.isa import ADDRESS_OFFSETS
+from assembler.isa import ADDRESS_OFFSETS
 
 def create_symbol_table(ir: dict, labels:set) -> dict:
     table = {

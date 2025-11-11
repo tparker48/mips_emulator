@@ -1,9 +1,8 @@
 import argparse
-import sys
-from tools.assembler.lexer import MIPSLexer
-from tools.assembler.parser import MIPSParser
-from tools.assembler.assembly_processing import preprocess, postprocess
-from tools.assembler.encoder import encode_binary
+from assembler.lexer import MIPSLexer
+from assembler.parser import MIPSParser
+from assembler.assembly_processing import preprocess, postprocess
+from assembler.encoder import encode_binary
     
 
 def assemble(input_file: str, output_file: str, verbose: bool = False):
