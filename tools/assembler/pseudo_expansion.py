@@ -16,6 +16,7 @@ def expand_la(ir: dict) -> list[dict]:
     }
     ori = {
         **ir,
+        'r1': ir['r0'],
         'name': 'ori',
         'type': 'instruction',
         'op': INSTRUCTIONS['ori'].op_code,

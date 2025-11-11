@@ -1,4 +1,4 @@
-from typing import Final, Callable
+from typing import Final
 from enum import Enum
 
 class InstructionType(Enum):
@@ -11,10 +11,14 @@ class InstructionData:
     op_code: int = None
     funct_code:int = None
     instruction_type: InstructionType = None
+
     def __init__(self, instruction_type: InstructionType, op_code: int, funct_code: int = None):
         self.op_code = op_code
         self.instruction_type = instruction_type
         self.funct_code = funct_code
+
+    def __repr__(self) -> str:
+        return f'| op:{self.op_code}, funct:{self.funct_code}, type:{self.instruction_type} |'
 
 INSTRUCTIONS : Final[dict[str, int]] = {
     'sll':   InstructionData(InstructionType.R_TYPE, 0x00, 0x00),

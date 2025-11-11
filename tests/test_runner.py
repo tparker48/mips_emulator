@@ -1,7 +1,8 @@
 import struct
 import os
 
-from tools.assembler.mips_assembler import assemble_binary
+def assemble_binary(asm_file: str, bin_file: str):
+    os.system(f'python -m tools.assembler {asm_file} -o {bin_file}')
 
 def check_assembler_output(binary_file: str, reference_file: str):
     success = True
@@ -14,7 +15,7 @@ def check_assembler_output(binary_file: str, reference_file: str):
     words = []
     with open(binary_file, 'rb') as f:
         data = f.read()
-    for i in range(0, len(data), 4):
+    for i in range(8, len(data), 4):
         word = data[i:i+4]
         raw = struct.unpack('>I', word)[0]
         words.append(f'{raw:08X}')

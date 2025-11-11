@@ -114,7 +114,7 @@ class MIPSParser(Parser):
     @_('instruction REGISTER')
     def instruction_call(self, p):
         return p.instruction | {
-            'reg0': p.REGISTER,
+            'r0': p.REGISTER,
         }
     
     @_('instruction label')
@@ -224,11 +224,10 @@ class MIPSParser(Parser):
         inst = {
             'type': 'instruction',
             'name': p.MNEMONIC,
-            'op':instruction_data.op_code
+            'op':instruction_data.op_code,
+            'funct': instruction_data.funct_code,
+            'instruction_type': instruction_data.instruction_type
             }
-        if (instruction_data.funct_code):
-            inst['funct'] = instruction_data.funct_code
-
         return inst
 
     # Pseudo-Instruction
@@ -236,7 +235,7 @@ class MIPSParser(Parser):
     def pseudo(self, p):
         return { 
             'type': 'pseudo',
-            'name': p.PSEUDO_MNEMONIC 
+            'name': p.PSEUDO_MNEMONIC,
         }
     
     # Literal list
@@ -277,20 +276,3 @@ class MIPSParser(Parser):
     @_('ID')
     def label(self, p):
         return p.ID
-
-from tools.assembler.assembly_processing import preprocess, postprocess
-    
-if __name__ == '__main__':
-    lexer = MIPSLexer()
-    parser = MIPSParser()
-
-    with open('tools/assembler/testlines.txt') as test_input:
-        data = preprocess(test_input.read())
-        toks = lexer.tokenize(data)
-        ir = parser.parse(toks)
-        ir = postprocess(ir, lexer.labels)
-
-        for segment_name,data in ir.items():
-            print(segment_name)
-            for val in data:
-                print(val)

@@ -7,6 +7,7 @@ def create_symbol_table(ir: dict, labels:set) -> dict:
     for segment_name in ir.keys():
         addr = ADDRESS_OFFSETS[segment_name]
         for item in ir[segment_name]:
+            item['addr'] = addr
             item_type = item['type']
             if item_type == 'label_decl':
                 table[item['label_name']] = addr
@@ -14,6 +15,7 @@ def create_symbol_table(ir: dict, labels:set) -> dict:
                 addr+=4
             elif item_type == 'raw_byte':
                 addr+=1
+
     return table
 
 def resolve_symbol(label: str, symbol_table: dict) -> int:

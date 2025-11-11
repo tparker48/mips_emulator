@@ -60,7 +60,7 @@ def resolve_labels(ir: dict, labels: set) -> dict:
                 value = resolve_symbol(label_stub, symbol_table)
                 del item['label']
                 if item['type'] == 'instruction':
-                    item['immediate'] = value
+                    item['immediate'] = {'type':'int', 'val': value}
                 else:
                     item['val'] = value
     return ir
