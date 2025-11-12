@@ -5,8 +5,8 @@ uint8_t text[sizeof(uint8_t) * TEXT_SIZE];
 uint8_t static_data[sizeof(uint8_t) * STATIC_DATA_SIZE];
 uint8_t stack[sizeof(uint8_t) * STACK_SIZE];
 uint8_t heap[sizeof(uint8_t) * HEAP_SIZE];
-uint8_t kernel[sizeof(uint8_t) * KERNEL_SIZE];
 
+uint8_t kernel[sizeof(uint8_t) * KERNEL_SIZE];
 uint32_t kernel_start_addr;
 uint32_t kernel_exception_vector_addr;
 

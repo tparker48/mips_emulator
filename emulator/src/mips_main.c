@@ -53,11 +53,17 @@ int load_program_from_disk(char* input_file, uint8_t dest[], int dest_size){
         return 0;
     }
 
-    // Get file length
+    // Get segment sizes in bytes
+    uint32_t text_segment_size;
+    uint32_t data_segment_size;
+    fread(&text_segment_size, sizeof(uint32_t), 1, fptr);
+    fread(&data_segment_size, sizeof(uint32_t), 1, fptr);
+
+    // Get remaining file length
     fseek(fptr, 0, SEEK_END);
     filelen = ftell(fptr);
     rewind(fptr);
-    if (filelen > TEXT_SIZE)
+    if (filelen > dest_size)
     {
         printf("Input file too big!.\n");
         fclose(fptr);
@@ -65,7 +71,7 @@ int load_program_from_disk(char* input_file, uint8_t dest[], int dest_size){
     }
 
     // Copy bytes
-    buffer = (char *)malloc(filelen * sizeof(char));
+    buffer = (char *) malloc(filelen * sizeof(char));
     fread(buffer, 1, filelen, fptr);
     fclose(fptr);
     write_program_to_memory(buffer, filelen, dest, dest_size);
