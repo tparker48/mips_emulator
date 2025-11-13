@@ -4,6 +4,16 @@ from assembler.isa import INSTRUCTIONS, InstructionData
 
 class MIPSParser(Parser):
     tokens = MIPSLexer.tokens
+
+    def error(self, token):
+        """
+        Called when a syntax error is detected.
+        """
+        if token:
+            msg = f"Syntax error at token '{token.value}', line {token.lineno-1}"
+        else:
+            msg = "Syntax error: Unexpected end of input"
+        raise SyntaxError(msg)
     
     # Program
     @_('segment')
@@ -226,7 +236,6 @@ class MIPSParser(Parser):
             'name': p.MNEMONIC,
             'op':instruction_data.op_code,
             'funct': instruction_data.funct_code,
-            'instruction_type': instruction_data.instruction_type
             }
         return inst
 

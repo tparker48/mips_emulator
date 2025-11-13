@@ -43,7 +43,11 @@ def build_instruction(ir_data: dict, rd=None, rs=None, rt=None, shamt=0, immedia
     funct = int(ir_data['funct']) if ir_data['funct'] else 0
 
     def reg_map(reg: str) -> int:
-        return Registers[reg.strip('$')].value
+        reg = reg.strip('$')
+        if reg not in [reg.name for reg in Registers]:
+            raise SyntaxError(f'Unrecognized register "{reg}", line {ir_data["lineno"]}')
+        else:
+            return Registers[reg].value
     
     rd = reg_map(rd) if rd else 0
     rs = reg_map(rs) if rs else 0

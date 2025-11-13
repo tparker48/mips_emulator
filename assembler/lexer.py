@@ -2,6 +2,8 @@ from sly import Lexer
 
 from assembler.isa import INSTRUCTIONS, PSEUDOINSTRUCTIONS
 
+line_offset = True
+
 class MIPSLexer(Lexer):
     labels = set()
     ignore = ' \t'
@@ -82,5 +84,8 @@ class MIPSLexer(Lexer):
     @_(r'\n+')
     def NEWLINE(self, t):
         self.lineno += len(t.value)
+        if line_offset and self.lineno == 1:
+            self.lineno = 0
+            self.line_offset = False
         return t
     

@@ -1,18 +1,20 @@
 from assembler.instruction_encoders import INSTRUCTION_ENCODERS
 
-def encode_binary(ir_data: dict) -> bytearray:
-    # 1st word: TEXT length
-    # 2nd word: DATA length
-    # TEXT
-    # DATA
-
+def encode_binary(ir_data: dict, verbose: bool = False) -> bytearray:
     segment_bytes = {key: bytearray() for key in ir_data.keys()}
 
     for segment, segment_data in ir_data.items():
+        if verbose: 
+            print(segment)
+
         for ir_entry in segment_data:
             raw_bytes = generate_bytes(ir_entry)
             if raw_bytes:
                 segment_bytes[segment] += raw_bytes
+
+            if verbose:
+                print(ir_entry)
+                print(''.join([format(byte, '08b') for byte in raw_bytes]))
 
     file_header = bytearray()
     file_segments = bytearray()

@@ -1,5 +1,7 @@
 # Absolute pile of slop (rough demo)
 
+import sys
+
 from textual.app import App, ComposeResult
 from textual.screen import Screen
 from textual.widgets import Placeholder
@@ -20,9 +22,15 @@ from textual.widgets import Button
 from textual.containers import VerticalGroup
 from textual.containers import HorizontalGroup
 
+from assembler.assemble import assemble
 
-class Header(Header):
-    pass
+
+
+
+stdout = sys.stdout
+stderr = sys.stderr
+
+
 
 class ToolbarButton(Button):
     DEFAULT_CSS = """
@@ -31,7 +39,7 @@ class ToolbarButton(Button):
     }
     """
 
-class Toolbar(HorizontalGroup):
+class CodeToolbar(HorizontalGroup):
     DEFAULT_CSS = """
     Toobar {
         height: 1;
@@ -39,14 +47,25 @@ class Toolbar(HorizontalGroup):
     }
     """
     def compose(self) -> ComposeResult:
-        yield ToolbarButton("File", id="File", compact=True)
-        yield ToolbarButton("Assemble", compact=True)
-        yield ToolbarButton("Run", compact=True)
+        #yield ToolbarButton("File", id="File", compact=True)
+        yield ToolbarButton("Assemble", id="Assemble", compact=True, variant="default")
+        yield ToolbarButton("Run", compact=True, variant="primary")
+
+class LogToolbar(HorizontalGroup):
+    DEFAULT_CSS = """
+    Toobar {
+        height: 1;
+        dock: top;
+    }
+    """
+    def compose(self) -> ComposeResult:
+        yield ToolbarButton("Clear", id="Clear", compact=True, variant="default")
+
 
 class Footer(Footer):
     pass
 
-class CodeArea(TextArea):
+class CodeWindow(TextArea):
     DEFAULT_CSS = """
     CodeArea {
         width: 1fr;
@@ -54,41 +73,17 @@ class CodeArea(TextArea):
     }
     """
 
-tabs = [
-    ["test1", CodeArea(soft_wrap=False)],
-    ["test2", CodeArea(soft_wrap=False)]
-]
-
-
-class CodeWindow(TabbedContent):
-    DEFAULT_CSS = """
-    CodeWindow {
-        width: 1fr;
-        height: 1fr;
-    }
-    """
-    def compose(self) -> ComposeResult:
-        with TabbedContent():
-            for name, widget in tabs:
-                with TabPane(name):
-                    yield widget
-
 class LogWindow(Log):
     DEFAULT_CSS = """
     LogWindow {
         width: 1fr;
         height: 1fr;
-        scrollbar-visibility: hidden;
     }
     """
+    pass
 
-class DirectoryTree(DirectoryTree):
-    DEFAULT_CSS = """
-    DirectoryTree {
-        width: 0.5fr;
-        height: 1fr;
-    }
-    """
+code = CodeWindow(id="Code", show_line_numbers=True, tab_behavior='indent')
+log = LogWindow(id="Log", auto_scroll=True)
 
 class ColumnsContainer(VerticalGroup):
     DEFAULT_CSS = """
@@ -99,8 +94,10 @@ class ColumnsContainer(VerticalGroup):
     """
     def compose(self) -> ComposeResult:
         # yield DirectoryTree("./")
-        yield CodeArea(id="Code")
-        yield LogWindow(id="Log", auto_scroll=True)
+        yield CodeToolbar(id="CodeToolbar")
+        yield code
+        yield LogToolbar(id="LogToolbar")
+        yield log
         
 class OverlayScreen(Screen):
     def compose(self) -> ComposeResult:
@@ -124,23 +121,56 @@ class OverlayScreen(Screen):
             self.app.pop_screen()
         return super()._on_key(event)
 
-class SomeScreen(Screen):
+class MainScreen(Screen):
     def compose(self) -> ComposeResult:
-        #yield Header(id="Header")
-        yield Toolbar(id="Toolbar")
-        yield Footer(id="Footer")
+        yield Header(id="Header")
         yield ColumnsContainer(id="Columns")
+        yield Footer(id="Footer")
         
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "File":
+            return
             self.app.push_screen(OverlayScreen())
+        elif event.button.id == "Assemble":
+            assemble_current_text()
+        elif event.button.id == "Run":
+            run()
+        elif event.button.id == "Clear":
+            log.clear()
 
+def assemble_current_text():
+    with open("tmp.asm", "w") as asm_file:
+        asm_file.write(code.text)
+
+    with open('assembler_output.log', 'w') as f_out, open('assembler_error.log', 'w') as f_err:
+        sys.stdout = f_out
+        sys.stderr = f_err
+
+        try:
+            assemble("tmp.asm", "tmp.bin", verbose=True)
+            print("Success")
+
+        except Exception as e:
+            print(e)
+            print("Fail")
+
+        
+    sys.stdout = stdout
+    sys.stderr = stderr
+
+    with open('assembler_output.log', 'r') as f_out, open('assembler_error.log', 'r') as f_err:
+        log.write_lines(f_out.readlines()+f_err.readlines())
+
+    
+
+
+def run():
+    None
 
 class MIPSEmulator(App):
     def on_mount(self) -> None:
-        self.push_screen(OverlayScreen())
-        self.push_screen(SomeScreen())
-
+        self.theme = "tokyo-night"
+        self.push_screen(MainScreen())
 
 if __name__ == "__main__":
     app = MIPSEmulator()
