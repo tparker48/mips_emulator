@@ -2,6 +2,7 @@
 #include "mips_alu.h"
 #include "mips_memory.h"
 #include "mips_instructions.h"
+#include "mips_os.h"
 
 struct InstructionFetch IF;
 struct InstructionDecode ID;
@@ -45,25 +46,32 @@ int get_exit_code()
     return exit_code;
 }
 
-void trigger_trap(int pc_store, int cause_code)
+void trigger_trap(uint32_t current_pc, uint32_t cause_code)
 {
-    trap_pc = pc_store;
+    trap_pc = current_pc - 4;
     trap_cause = cause_code;
     trap_pending = true;
 }
 
 void execute_trap()
 {
-    // need more logic here to store state?
-    cop0[cause] = trap_cause << 2;
-    cop0[epc] = trap_pc;
+    switch(trap_cause) {
+        case TRAP_SYSCALL:
+            handle_syscall();
+            break;
+        case TRAP_IBUS:
+            exit_flag = true;
+            exit_code = 1;
+            break;
+        case TRAP_OVERFLOW:
+            printf("Overflow detected!\n");
+            break;
+    }
 
-    // more state stuff later
-    pc = kernel_exception_handler_addr;
-
-    trap_pending = false;
+    pc = trap_pc;
     trap_pc = 0;
     trap_cause = 0;
+    trap_pending = false;
 }
 
 bool pipeline_empty()
@@ -73,6 +81,8 @@ bool pipeline_empty()
 
 void instruction_fetch()
 {
+    ID.noop = false;
+
     if (IF.forwarding.flag)
     {
         ID.forwarding.flag = true;
@@ -89,18 +99,23 @@ void instruction_fetch()
 
     if (pc >= pc_cap)
     {
-        printf("Program Counter Overrun.\n");
-        return;
-    }
-
-    uint32_t instruction = *access_mem_word(pc);
-    if (needs_bubble(instruction))
-    {
         ID.noop = true;
-        return;
+
+        if (pipeline_empty()){
+            trap_pending = true;
+            trap_cause = TRAP_IBUS;
+        }
+    }
+    else{
+        uint32_t instruction = *access_mem_word(pc);
+        if (needs_bubble(instruction))
+        {
+            ID.noop = true;
+            return;
+        }
+        ID.instruction_word = instruction;
     }
 
-    ID.instruction_word = instruction;
     pc += 4;
 }
 
@@ -165,28 +180,26 @@ void execute_instruction()
     {
         execute_i();
     }
-    else if (is_em_syscall(EXE.op_code)){
-        execute_em_syscall();
-    }
 
     exe_forward();
 }
 
 void memory_access()
 {
-    WB.noop = MEM.noop;
-
     if (MEM.noop)
     {
+        WB.noop = true;
         return;
     }
 
+    WB.noop = false;
     WB.write_from_mem = false;
     WB.write_from_alu = false;
     WB.write_hilo = false;
 
     if (MEM.write_mem)
     {
+        WB.noop = true;
         switch (MEM.op_code)
         {
         case OP_SB: sb(); break;
@@ -295,7 +308,7 @@ bool needs_bubble(uint32_t instruction)
 
     if (reads_mem(EXE.op_code))
     {
-        if (is_r_type(op_code) || is_i_type(op_code))
+        if (is_r_instruction(op_code) || is_i_instruction(op_code))
         {
             if (rs_id == EXE.rt_id || rt_id == EXE.rt_id)
             {

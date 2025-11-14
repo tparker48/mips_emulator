@@ -10,10 +10,7 @@ bool is_j_instruction(uint8_t op_code)
 }
 bool is_i_instruction(uint8_t op_code)
 {
-    return !(is_r_type(op_code) || is_j_type(op_code));
-}
-bool is_em_syscall(uint8_t op_code){
-    return op_code == 48;
+    return !(is_r_instruction(op_code) || is_j_instruction(op_code));
 }
 
 bool reads_mem(uint8_t op_code)

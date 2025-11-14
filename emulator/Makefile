@@ -8,6 +8,8 @@ SRCS = src/mips_alu.c \
        src/mips_registers.c \
        src/mips_pipeline.c \
        src/mips_instructions.c \
+       src/mips_program_loading.c \
+       src/mips_os.c \
        src/mips_main.c
 
 # Object files

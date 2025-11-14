@@ -47,7 +47,7 @@ class MIPSLexer(Lexer):
     ASCII = '.ascii'
     SPACE = '.space'
     ALIGN = '.align'
-    HEX = r'(0x)(a-fA-F|\d)+'
+    HEX = r'0[xX][0-9a-fA-F]+'
     BINARY = r'(0b)(1|0)+'
     INTEGER  = r'\d+'
     LPAREN = r'\('
@@ -89,3 +89,13 @@ class MIPSLexer(Lexer):
             self.line_offset = False
         return t
     
+
+    def error(self, token):
+        """
+        Called when a syntax error is detected.
+        """
+        if token:
+            msg = f"Lexer error at line {token.lineno-1}"
+        else:
+            msg = "Syntax error: Unexpected end of input"
+        raise SyntaxError(msg)

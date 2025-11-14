@@ -1,6 +1,7 @@
 # Absolute pile of slop (rough demo)
 
-import sys
+import os, sys
+import subprocess
 
 from textual.app import App, ComposeResult
 from textual.screen import Screen
@@ -49,7 +50,7 @@ class CodeToolbar(HorizontalGroup):
     def compose(self) -> ComposeResult:
         #yield ToolbarButton("File", id="File", compact=True)
         yield ToolbarButton("Assemble", id="Assemble", compact=True, variant="default")
-        yield ToolbarButton("Run", compact=True, variant="primary")
+        yield ToolbarButton("Run", id="Run", compact=True, variant="primary")
 
 class LogToolbar(HorizontalGroup):
     DEFAULT_CSS = """
@@ -134,7 +135,7 @@ class MainScreen(Screen):
         elif event.button.id == "Assemble":
             assemble_current_text()
         elif event.button.id == "Run":
-            run()
+            run_emulator()
         elif event.button.id == "Clear":
             log.clear()
 
@@ -142,9 +143,9 @@ def assemble_current_text():
     with open("tmp.asm", "w") as asm_file:
         asm_file.write(code.text)
 
-    with open('assembler_output.log', 'w') as f_out, open('assembler_error.log', 'w') as f_err:
+    with open('assembler_output.log', 'w') as f_out:
         sys.stdout = f_out
-        sys.stderr = f_err
+        sys.stderr = f_out
 
         try:
             assemble("tmp.asm", "tmp.bin", verbose=True)
@@ -158,14 +159,22 @@ def assemble_current_text():
     sys.stdout = stdout
     sys.stderr = stderr
 
-    with open('assembler_output.log', 'r') as f_out, open('assembler_error.log', 'r') as f_err:
-        log.write_lines(f_out.readlines()+f_err.readlines())
-
+    with open('assembler_output.log', 'r') as f_out:
+        log.write_lines(f_out.readlines())
     
+    os.remove('assembler_output.log')
 
+def run_emulator():
+    log.write_line("Running...")
 
-def run():
-    None
+    with open('emulator_output.log', 'w') as f_out:
+        subprocess.run('.\emulator\mips_sim.exe tmp.bin', stdout=f_out, stderr=f_out)
+
+    with open('emulator_output.log', 'r') as f_out:
+        log.write_lines(f_out.readlines())
+
+    os.remove('emulator_output.log')
+
 
 class MIPSEmulator(App):
     def on_mount(self) -> None:

@@ -1,8 +1,14 @@
 import struct
 import os
+import subprocess
+import argparse
 
 def assemble_binary(asm_file: str, bin_file: str):
     os.system(f'python -m assembler {asm_file} -o {bin_file}')
+
+def run_emulator(bin_file: str, out_file: str):
+    with open(out_file, 'w') as f_out:
+        subprocess.run(f'.\emulator\mips_sim.exe {bin_file}', stdout=f_out, stderr=f_out)
 
 def check_assembler_output(binary_file: str, reference_file: str):
     success = True
@@ -33,8 +39,27 @@ def check_assembler_output(binary_file: str, reference_file: str):
     
     return success
 
+def check_emulator_output(out_file: str, expected_file: str):
+    success = True
 
-def run_assebler_tests():
+    with open(out_file, 'r') as out, open(expected_file, 'r') as expected:
+        out_lines = out.readlines()
+        expected_lines = expected.readlines()
+    
+    for i in range(min(len(out_lines), len(expected_lines))):
+        if out_lines[i] != expected_lines[i]:
+            print(f'    Output line {i+1} does not match!')
+            print(f'        Expected: "{expected_lines[i].strip()}"')
+            print(f'        Actual:   "{out_lines[i].strip()}"')
+            success = False
+    
+    if len(out_lines) != len(expected_lines):
+        print(f'Length mismatch')
+        success = False
+
+    return success
+
+def run_assembler_tests():
     root_dir = 'tests/assembler_tests/'
     assembler_tests = []
     for file in os.listdir(root_dir):
@@ -53,11 +78,63 @@ def run_assebler_tests():
 
         print(f"    Checking {bin_file}")
         test_result = check_assembler_output(bin_file, bin_exepected_file)
-        
-        print(f"    Cleaning up {bin_file}")
+
         os.remove(bin_file)
+        print(f"    Result: {'PASS' if test_result else 'FAIL'}")
+
+def run_emulator_tests():
+    root_dir = 'tests/emulator_tests/'
+    assembler_tests = []
+    for file in os.listdir(root_dir):
+        if (file.endswith('.s')):
+            assembler_tests.append(file[:-2])
+
+    for test_name in assembler_tests:
+        print("-------------------------------------")
+        print(f"{test_name}:")
+        asm_file = os.path.join(root_dir, test_name+'.s')
+        bin_file = os.path.join(root_dir, test_name+'.bin')
+        out_file = os.path.join(root_dir, test_name+'.output')
+        exepected_output_file = os.path.join(root_dir, test_name+'.expected')
+
+        print(f"    Assembling {asm_file}")
+        assemble_binary(asm_file, bin_file)
+
+        print(f"    Running Emulator {bin_file}")
+        run_emulator(bin_file, out_file)
+
+        print(f"    Checking output")
+        test_result = check_emulator_output(out_file, exepected_output_file)
+        
+        os.remove(bin_file)
+        os.remove(out_file)
 
         print(f"    Result: {'PASS' if test_result else 'FAIL'}")
 
+
 if __name__ == '__main__':
-    run_assebler_tests()
+    argparser = argparse.ArgumentParser(
+        description="MIPS Assembler: Convert .s assembly files to binary."
+    )
+
+    argparser.add_argument(
+        "-e", "--emulator",
+        action="store_true",
+        help="Run only emulator tests"
+    )
+
+    argparser.add_argument(
+        "-a", "--assembler",
+        action="store_true",
+        help="Run only assembler tests"
+    )
+
+    args = argparser.parse_args()
+
+    if (not args.assembler) and (not args.emulator):
+        run_assembler_tests()
+        run_emulator_tests()
+    elif args.assembler:
+        run_assembler_tests()
+    elif args.emulator:
+        run_emulator_tests()

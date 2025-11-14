@@ -27,7 +27,7 @@
 #define OP_J     0x02
 #define OP_JAL   0x03
 
-// I-type funct codes
+// Funct codes
 #define FUNC_SLL        0x00
 #define FUNC_SRL        0x02
 #define FUNC_SRA        0x03
@@ -53,28 +53,10 @@
 #define FUNC_SLT        0x2A
 #define FUNC_SLTU       0x2B
 
-#define EM_SYSCALL_PRINT_INT 0xC0000001
-#define EM_SYSCALL_PRINT_FLOAT 0xC0000002
-#define EM_SYSCALL_PRINT_DOUBLE 0xC0000003
-#define EM_SYSCALL_PRINT_STRING 0xC0000004
-#define EM_SYSCALL_READ_INT 0xC0000005
-#define EM_SYSCALL_READ_FLOAT 0xC0000006
-#define EM_SYSCALL_READ_DOUBLE 0xC0000007
-#define EM_SYSCALL_READ_STRING 0xC0000008
-#define EM_SYSCALL_SBRK 0xC0000009
-#define EM_SYSCALL_EXIT 0xC000000A
-#define EM_SYSCALL_PRINT_CHARACTER 0xC000000B
-#define EM_SYSCALL_READ_CHARACTER 0xC000000C
-#define EM_SYSCALL_OPEN 0xC000000D
-#define EM_SYSCALL_READ_FILE 0xC000000E
-#define EM_SYSCALL_WRITE_FILE 0xC000000F
-#define EM_SYSCALL_CLOSE 0xC0000010
-#define EM_SYSCALL_EXIT2 0xC0000011
-
 bool is_r_instruction(uint8_t op_code);
 bool is_j_instruction(uint8_t op_code);
 bool is_i_instruction(uint8_t op_code);
-bool is_em_syscall(uint8_t op_code);
+
 
 bool reads_mem(uint8_t op_code);
 bool writes_hilo(uint8_t op_code, uint8_t funct);

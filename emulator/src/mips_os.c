@@ -1,19 +1,20 @@
-#include "mips_em_syscalls.h"
+#include "mips_os.h"
 #include "mips_instructions.h"
 #include "mips_registers.h"
 #include "mips_memory.h"
+#include "mips_pipeline.h"
 
-void handle_em_syscall(uint32_t em_syscall)
+void handle_syscall()
 {
-    switch (em_syscall)
+    switch (registers[v0])
     {
-    case EM_SYSCALL_PRINT_INT:
+    case SYSCALL_PRINT_INT:
         printf("%d", registers[a0]);
         break;
-    case EM_SYSCALL_PRINT_FLOAT:
-        printf("%f", fregisters[f12]);
+    case SYSCALL_PRINT_FLOAT:
+        printf("%f", (float)fregisters[f12]);
         break;
-    case EM_SYSCALL_PRINT_DOUBLE:
+    case SYSCALL_PRINT_DOUBLE:
         double d;
         uint32_t hi = fregisters[f12]; // $f12
         uint32_t lo = fregisters[f13]; // $f13
@@ -21,39 +22,39 @@ void handle_em_syscall(uint32_t em_syscall)
         memcpy(&d, &combined, sizeof(double));
         printf("%f", d);
         break;
-    case EM_SYSCALL_PRINT_STRING:
+    case SYSCALL_PRINT_STRING:
         char* charptr = (char*)access_mem_bytes(registers[a0],1);
         printf("%s", charptr);
         break;
-    case EM_SYSCALL_READ_INT:
+    case SYSCALL_READ_INT:
         break;
-    case EM_SYSCALL_READ_FLOAT:
+    case SYSCALL_READ_FLOAT:
         break;
-    case EM_SYSCALL_READ_DOUBLE:
+    case SYSCALL_READ_DOUBLE:
         break;
-    case EM_SYSCALL_READ_STRING:
+    case SYSCALL_READ_STRING:
         break;
-    case EM_SYSCALL_SBRK:
+    case SYSCALL_SBRK:
         break;
-    case EM_SYSCALL_EXIT:
+    case SYSCALL_EXIT:
         uint32_t code = registers[a0]; 
         trigger_exit(code);
         break;
-    case EM_SYSCALL_PRINT_CHARACTER:
+    case SYSCALL_PRINT_CHARACTER:
         char c = (char)registers[a0];
         printf("%c", c);
         break;
-    case EM_SYSCALL_READ_CHARACTER:
+    case SYSCALL_READ_CHARACTER:
         break;
-    case EM_SYSCALL_OPEN:
+    case SYSCALL_OPEN_FILE:
         break;
-    case EM_SYSCALL_READ_FILE:
+    case SYSCALL_READ_FILE:
         break;
-    case EM_SYSCALL_WRITE_FILE:
+    case SYSCALL_WRITE_FILE:
         break;
-    case EM_SYSCALL_CLOSE:
+    case SYSCALL_CLOSE_FILE:
         break;
-    case EM_SYSCALL_EXIT2:
+    case SYSCALL_EXIT2:
         break;
     }
 }

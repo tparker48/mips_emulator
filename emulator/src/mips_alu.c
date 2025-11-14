@@ -4,6 +4,7 @@
 #include "mips_alu.h"
 #include "mips_memory.h"
 #include "mips_instructions.h"
+#include "mips_os.h"
 
 void execute_r()
 {
@@ -74,17 +75,23 @@ void execute_j()
 
 // R
 void sll() {
-
+    write_register(EXE.rd_id, EXE.rt << EXE.shamt);
 }
 void srl() {
-
+    write_register(EXE.rd_id, EXE.rt >> EXE.shamt);
 }
 void sra() {
+    int32_t val = (int32_t)EXE.rt;
+    uint32_t result = ((uint32_t)val) >> EXE.shamt;
 
+    if (val < 0){
+        result |= ~((~0u) >> EXE.shamt);
+    }
+
+    write_register(EXE.rd_id, result);
 }
 void jr() {
     pc = EXE.rs;
-    MEM.noop = true;
 }
 void jalr() {
     write_register(ra, pc);
@@ -92,85 +99,96 @@ void jalr() {
 }
 void syscall(){
     trigger_trap(pc, 8);
-    MEM.noop = true;
     ID.noop = true;
 }
 void mfhi() {
-
+    write_register(EXE.rd, hi);
 }
 void mthi() {
-
+    write_hilo(EXE.rs, lo);
 }
 void mflo() {
-
+    write_register(EXE.rd, lo);
 }
 void mtlo() {
-
+    write_hilo(hi, EXE.rs);
 }
 void mult() {
-
+    // hilo = rs * rt
+    int64_t t1 = (int64_t)EXE.rs;
+    int64_t t2 = (int64_t)EXE.rt;
+    int64_t result = t1*t2;
+    write_hilo((uint32_t)(result>>32), (uint32_t)result);
 }
 void multu() {
-
+    // hilo = rs * rt
+    uint64_t t1 = (uint64_t)EXE.rs;
+    uint64_t t2 = (uint64_t)EXE.rt;
+    uint64_t result = t1*t2;
+    write_hilo((uint32_t)(result>>32), (uint32_t)result);
 }
 void div_() {
-    if (EXE.rt == 0){
+    // lo = rs/rt, hi = rs%rt
+    int32_t t1 = (int32_t)EXE.rs;
+    int32_t t2 = (int32_t)EXE.rt;
+
+    if (t2 == 0){
         // divide by zero exception
-        MEM.noop = true;
         return;
     }
-    
+    write_hilo(t1%t2, t1/t2);
 }
 void divu() {
-    if (EXE.rt == 0)
-    {
-        // divide by zero exception
-        MEM.noop = true;
-        return;
-    }
+    // lo = rs/rt, hi = rs%rt
+    uint32_t t1 = (uint32_t)EXE.rs;
+    uint32_t t2 = (uint32_t)EXE.rt;
 
+    if (t2 == 0){
+        // divide by zero exception
+        return; 
+    }
+    write_hilo(t1%t2, t1/t2);
 }
 void add() {
     int32_t t1 = (int32_t)EXE.rs;
     int32_t t2 = (int32_t)EXE.rt;
     int32_t result = t1 + t2;
-    if (t1 > 0 && t2 > 0 && result < 0)
+    if ((t1 > 0 && t2 > 0 && result < 0) ||
+        (t1 < 0 && t2 < 0 && result > 0))
     {
-        // overflow exception
-        MEM.noop = true;
-        return;
-    }
-    if (t1 < 0 && t2 < 0 && result > 0)
-    {
-        // overflow exception
-        MEM.noop = true;
+        trigger_trap(pc, TRAP_OVERFLOW);
         return;
     }
     write_register(EXE.rd_id, result);
 }
 
 void addu() {
-    write_register(EXE.rd_id, EXE.rs + EXE.rt);
+    uint32_t result = EXE.rs + EXE.rt;
+    if (result < EXE.rs){
+        trigger_trap(pc, TRAP_OVERFLOW);
+        return;
+    }
+    write_register(EXE.rd_id, result);
 }
 void sub() {
     int32_t t1 = (int32_t)EXE.rs;
     int32_t t2 = (int32_t)EXE.rt;
     int32_t result = t1-t2;
-    if (t1 > 0 && t2 < 0 && result < 0){
-        // overflow exception
-        MEM.noop = true;
+    if ((t1 > 0 && t2 < 0 && result < 0) ||
+        (t1 < 0 && t2 > 0 && result > 0))
+    {
+        trigger_trap(pc, TRAP_OVERFLOW);
         return;
     }
-    if (t1 < 0 && t2 > 0 && result > 0){
-        // overflow exception
-        MEM.noop = true;
-        return;
-    }
-    
     write_register(EXE.rd_id, result);
 }
 void subu() {
-    write_register(EXE.rd_id, EXE.rs - EXE.rt);
+    if (EXE.rs < EXE.rt){
+        trigger_trap(pc, TRAP_OVERFLOW);
+        return;
+    }
+    uint32_t result = EXE.rs - EXE.rt;
+    write_register(EXE.rd_id, result);
 }
 void and() {
     write_register(EXE.rd_id, EXE.rs & EXE.rt);
@@ -185,42 +203,110 @@ void nor() {
     write_register(EXE.rd_id, ~(EXE.rs | EXE.rt));
 }
 void slt() {
-    write_register(EXE.rt_id, (EXE.rs < EXE.immediate_se ? 1: 0));
+    write_register(EXE.rd_id, ((int32_t)EXE.rs < (int32_t)EXE.rt ? 1: 0));
 }
 void sltu() {
-    write_register(EXE.rt_id, (EXE.rs < (uint32_t)EXE.immediate_se ? 1 : 0));
+    write_register(EXE.rd_id, (EXE.rs < EXE.rt ? 1: 0));
 }
 
 // I
-void beq() {}
-void bne() {}
-void blez() {}
-void bgtz() {}
-void addi() {}
-void addiu() {}
-void slti() {}
-void sltiu() {}
-void andi() {}
-void ori() {}
-void lui() {}
+void beq() {
+    uint32_t branch_addr = (uint32_t)EXE.immediate_se << 2;
+    if (EXE.rs == EXE.rt){
+        pc += branch_addr;
+    }
+}
+void bne() {
+    uint32_t branch_addr = (uint32_t)EXE.immediate_se << 2;
+    if (EXE.rs != EXE.rt){
+        pc += branch_addr;
+    }
+}
+void blez() {
+    uint32_t branch_addr = (uint32_t)EXE.immediate_se << 2;
+    if (EXE.rs <= 0){
+        pc += branch_addr;
+    }
+}
+void bgtz() {
+    uint32_t branch_addr = (uint32_t)EXE.immediate_se << 2;
+    if ((int32_t)EXE.rs > 0){
+        pc += branch_addr;
+    }
+}
+void addi() {
+    int32_t t1 = (int32_t)EXE.rs;
+    int32_t t2 = EXE.immediate_se;
+    int32_t result = t1 + t2;
+
+    //printf("%d+%d = %d -> %d\n", t1,t2,result, EXE.rt_id);
+
+    if ((t1 > 0 && t2 > 0 && result < 0) ||
+        (t1 < 0 && t2 < 0 && result > 0))
+    {
+        trigger_trap(pc, TRAP_OVERFLOW);
+        return;
+    }
+    write_register(EXE.rt_id, result);
+}
+void addiu() {
+    uint32_t result = EXE.rs + (uint32_t)EXE.immediate_se;
+    if (result < EXE.rs){
+        trigger_trap(pc, TRAP_OVERFLOW);
+        return;
+    }
+    write_register(EXE.rt_id, result);
+}
+void slti() {
+    write_register(EXE.rt_id, ((int32_t)EXE.rs < EXE.immediate_se ? 1: 0));
+}
+void sltiu() {
+    write_register(EXE.rt_id, (EXE.rs < (uint32_t)EXE.immediate_se ? 1: 0));
+}
+void andi() {
+   write_register(EXE.rt_id, EXE.rs & EXE.immediate_ze ); 
+}
+void ori() {
+    write_register(EXE.rt_id, EXE.rs | EXE.immediate_ze ); 
+}
+void lui() {
+    write_register(EXE.rt_id, EXE.rs | ((uint32_t)EXE.immediate_se)>>16 ); 
+}
 
 // J
-void j() {}
-void jal() {}
+void j() {
+    pc = EXE.address;
+}
+void jal() {
+    write_register(ra, pc);
+    pc = EXE.address;
+}
 
 // utils
 void write_register(uint8_t reg_to_write, uint32_t out)
 {
+    MEM.noop = false;
     MEM.write_reg = true;
     MEM.register_to_write = reg_to_write;
     MEM.alu_out = out;
 }
+
+void write_hilo(uint32_t new_hi, uint32_t new_lo)
+{
+    MEM.noop = false;
+    MEM.write_hilo = true;
+    MEM.hi = new_hi;
+    MEM.lo = new_lo;
+}
+
 void prepare_memory_read(){
+    MEM.noop = false;
     MEM.read_mem = true;
     MEM.alu_out = EXE.rs + EXE.immediate_se;
 }
 void prepare_memory_write()
 {
+    MEM.noop = false;
     MEM.write_mem = true;
     MEM.reg_out = EXE.rt;
     MEM.alu_out = EXE.rs + EXE.immediate_se;

@@ -19,3 +19,6 @@ bin/*.bin
 *.swp
 *.bak
 *.tmp
+
+tmp.asm
+tmp.bin
