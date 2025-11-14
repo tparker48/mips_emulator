@@ -201,6 +201,10 @@ class MIPSParser(Parser):
         }
         
     # Pseudo-Instruction Call
+    @_('pseudo')
+    def pseudo_call(self, p):
+        return p.pseudo
+
     @_('pseudo REGISTER COMMA REGISTER')
     def pseudo_call(self, p):
         return p.pseudo | {

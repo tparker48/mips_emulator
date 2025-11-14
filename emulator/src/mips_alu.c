@@ -275,11 +275,13 @@ void lui() {
 
 // J
 void j() {
-    pc = EXE.address;
+    uint32_t addr = EXE.address << 2;
+    pc = addr;
 }
 void jal() {
     write_register(ra, pc);
-    pc = EXE.address;
+    uint32_t addr = EXE.address << 2;
+    pc = addr;
 }
 
 // utils

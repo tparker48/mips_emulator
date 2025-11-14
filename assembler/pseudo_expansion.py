@@ -25,7 +25,19 @@ def expand_la(ir: dict) -> list[dict]:
     }
     return [lui, ori]
 
+def expand_nop(ir: dict) -> list[dict]:
+    return [{
+        'name': 'addi',
+        'type': 'instruction',
+        'op': INSTRUCTIONS['addi'].op_code,
+        'funct': INSTRUCTIONS['addi'].funct_code,
+        'r0': '$zero',
+        'r1': '$zero',
+        'immediate': {'type':'int', 'val':0},
+    }]
+
 PSEUDO_EXPANDERS = {
-    'la': expand_la
+    'la': expand_la,
+    'nop': expand_nop
 }
 

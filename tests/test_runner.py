@@ -79,7 +79,9 @@ def run_assembler_tests():
         print(f"    Checking {bin_file}")
         test_result = check_assembler_output(bin_file, bin_exepected_file)
 
-        os.remove(bin_file)
+        if test_result:
+            os.remove(bin_file)
+
         print(f"    Result: {'PASS' if test_result else 'FAIL'}")
 
 def run_emulator_tests():
@@ -106,8 +108,9 @@ def run_emulator_tests():
         print(f"    Checking output")
         test_result = check_emulator_output(out_file, exepected_output_file)
         
-        os.remove(bin_file)
-        os.remove(out_file)
+        if (test_result):
+            os.remove(bin_file)
+            os.remove(out_file)
 
         print(f"    Result: {'PASS' if test_result else 'FAIL'}")
 
