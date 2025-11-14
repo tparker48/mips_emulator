@@ -204,7 +204,16 @@ class MIPSParser(Parser):
     @_('pseudo')
     def pseudo_call(self, p):
         return p.pseudo
-
+    @_('pseudo REGISTER')
+    def pseudo_call(self, p):
+        return p.pseudo | {
+            'r0': p.REGISTER,
+        }
+    @_('pseudo label')
+    def pseudo_call(self, p):
+        return p.pseudo | {
+            'label': p.label
+        }
     @_('pseudo REGISTER COMMA REGISTER')
     def pseudo_call(self, p):
         return p.pseudo | {
@@ -215,7 +224,7 @@ class MIPSParser(Parser):
     def pseudo_call(self, p):
         return p.pseudo | {
             'r0': p.REGISTER,
-            'imm': p.literal
+            'immediate': p.literal
         }
     @_('pseudo REGISTER COMMA label')
     def pseudo_call(self, p):
