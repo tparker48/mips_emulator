@@ -168,16 +168,16 @@ void addu() {
     write_register(EXE.rd_id, result);
 }
 void sub() {
-    int32_t t1 = (int32_t)EXE.rs;
-    int32_t t2 = (int32_t)EXE.rt;
-    int32_t result = t1-t2;
-    if ((t1 > 0 && t2 < 0 && result < 0) ||
-        (t1 < 0 && t2 > 0 && result > 0))
+    int64_t t1 = (int64_t)(int32_t)EXE.rs;
+    int64_t t2 = (int64_t)(int32_t)EXE.rt;
+    int64_t result = t1 - t2;
+
+    if (result > INT32_MAX || result < INT32_MIN)
     {
         trigger_trap(pc, TRAP_OVERFLOW);
         return;
     }
-    write_register(EXE.rd_id, result);
+    write_register(EXE.rd_id, (int32_t)result);
 }
 void subu() {
     if (EXE.rs < EXE.rt){
