@@ -8,13 +8,15 @@ def encode_binary(ir_data: dict, verbose: bool = False) -> bytearray:
             print(segment)
 
         for ir_entry in segment_data:
-            raw_bytes = generate_bytes(ir_entry)
-            if raw_bytes:
-                segment_bytes[segment] += raw_bytes
-
             if verbose:
                 print(ir_entry)
-                print(''.join([format(byte, '08b') for byte in raw_bytes]))
+
+            raw_bytes = generate_bytes(ir_entry)
+            if raw_bytes:
+                if verbose:
+                    print(''.join([format(byte, '08b') for byte in raw_bytes]))
+
+                segment_bytes[segment] += raw_bytes
 
     file_header = bytearray()
     file_segments = bytearray()

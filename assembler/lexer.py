@@ -49,7 +49,7 @@ class MIPSLexer(Lexer):
     ALIGN = '.align'
     HEX = r'0[xX][0-9a-fA-F]+'
     BINARY = r'(0b)(1|0)+'
-    INTEGER  = r'\d+'
+    INTEGER  = r'-?\d+'
     LPAREN = r'\('
     RPAREN = r'\)'
     COMMA = r'\,'

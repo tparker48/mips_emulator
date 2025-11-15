@@ -270,7 +270,7 @@ void ori() {
     write_register(EXE.rt_id, EXE.rs | EXE.immediate_ze ); 
 }
 void lui() {
-    write_register(EXE.rt_id, EXE.rs | ((uint32_t)EXE.immediate_se)>>16 ); 
+    write_register(EXE.rt_id, ((uint32_t)EXE.immediate_ze)<< 16 ); 
 }
 
 // J

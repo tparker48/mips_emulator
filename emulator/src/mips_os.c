@@ -9,7 +9,7 @@ void handle_syscall()
     switch (registers[v0])
     {
     case SYSCALL_PRINT_INT:
-        printf("%d", registers[a0]);
+        printf("%d", (int32_t)registers[a0]);
         break;
     case SYSCALL_PRINT_FLOAT:
         printf("%f", (float)fregisters[f12]);
