@@ -13,7 +13,11 @@ def run_test_group(group_dir: str, test_run_function: Callable):
     for path, _dir, files in os.walk(group_dir):
         for file in files:
             if (file.endswith('.s')):
-                test_group.append(os.path.join(path,file[:-2]))
+                with open(os.path.join(path,file), 'r') as testfile:
+                    if testfile.readline().strip() == "# TODO":
+                        print(f"Skipping {file} (TODO)")
+                    else:
+                        test_group.append(os.path.join(path,file[:-2]))
 
     for test_path in test_group:
         print("-------------------------------------")
