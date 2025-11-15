@@ -15,6 +15,7 @@ void handle_syscall()
         printf("%f", (float)fregisters[f12]);
         break;
     case SYSCALL_PRINT_DOUBLE:
+    {
         double d;
         uint32_t hi = fregisters[f12]; // $f12
         uint32_t lo = fregisters[f13]; // $f13
@@ -22,10 +23,13 @@ void handle_syscall()
         memcpy(&d, &combined, sizeof(double));
         printf("%f", d);
         break;
+    }
     case SYSCALL_PRINT_STRING:
+    {
         char* charptr = (char*)access_mem_bytes(registers[a0],1);
         printf("%s", charptr);
         break;
+    }
     case SYSCALL_READ_INT:
         break;
     case SYSCALL_READ_FLOAT:
@@ -37,13 +41,17 @@ void handle_syscall()
     case SYSCALL_SBRK:
         break;
     case SYSCALL_EXIT:
+    {
         uint32_t code = registers[a0]; 
         trigger_exit(code);
         break;
+    }
     case SYSCALL_PRINT_CHARACTER:
+    {
         char c = (char)registers[a0];
         printf("%c", c);
         break;
+    }
     case SYSCALL_READ_CHARACTER:
         break;
     case SYSCALL_OPEN_FILE:

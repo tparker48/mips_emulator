@@ -5,6 +5,8 @@ import argparse
 
 from typing import Callable
 
+ASSEMBLER_TESTS_DIR = "tests\\assembler_tests\\"
+EMULATOR_TESTS_DIR = "tests\\emulator_tests\\"
 
 def run_test_group(group_dir: str, test_run_function: Callable):
     test_group = []
@@ -128,9 +130,9 @@ if __name__ == '__main__':
     args = argparser.parse_args()
 
     if (not args.assembler) and (not args.emulator):
-        run_test_group('tests/assembler_tests/', run_assembler_test)
-        run_test_group('tests/emulator_tests/', run_emulator_test)
+        run_test_group(ASSEMBLER_TESTS_DIR, run_assembler_test)
+        run_test_group(EMULATOR_TESTS_DIR, run_emulator_test)
     elif args.assembler:
-        run_test_group('tests/assembler_tests/', run_assembler_test)
+        run_test_group(ASSEMBLER_TESTS_DIR, run_assembler_test)
     elif args.emulator:
-        run_test_group('tests/emulator_tests/', run_emulator_test)
+        run_test_group(EMULATOR_TESTS_DIR, run_emulator_test)
