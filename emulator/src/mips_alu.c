@@ -151,16 +151,16 @@ void divu() {
     write_hilo(t1%t2, t1/t2);
 }
 void add() {
-    int32_t t1 = (int32_t)EXE.rs;
-    int32_t t2 = (int32_t)EXE.rt;
-    int32_t result = t1 + t2;
-    if ((t1 > 0 && t2 > 0 && result < 0) ||
-        (t1 < 0 && t2 < 0 && result > 0))
+    int64_t t1 = (int64_t)(int32_t)EXE.rs;
+    int64_t t2 = (int64_t)(int32_t)EXE.rt;
+    int64_t result = t1 + t2;
+
+    if (result > INT32_MAX || result < INT32_MIN)
     {
         trigger_trap(pc, TRAP_OVERFLOW);
         return;
     }
-    write_register(EXE.rd_id, result);
+    write_register(EXE.rd_id, (int32_t)result);
 }
 
 void addu() {
@@ -248,11 +248,7 @@ void addi() {
     write_register(EXE.rt_id, (int32_t)result);
 }
 void addiu() {
-    uint32_t result = EXE.rs + (uint32_t)EXE.immediate_se;
-    if (result < EXE.rs){
-        trigger_trap(pc, TRAP_OVERFLOW);
-        return;
-    }
+    uint32_t result = (uint32_t)EXE.rs + (uint32_t)EXE.immediate_se;
     write_register(EXE.rt_id, result);
 }
 void slti() {

@@ -1,23 +1,28 @@
 li $t1, 10
-addi $t0, $t1, 5
+li $t2, 5
+add $t0, $t1, $t2
 jal print_t0
 nop
 
-addi $t0, $t0, -5
+li $t2, -5
+add $t0, $t0, $t2
 jal print_t0
 nop
 
+li $t2, -1000
 li $a3, -500
-addi $t0, $a3, -1000
+add $t0, $a3, $t2
 jal print_t0
 nop
 
-addi $t0, $t0, 1000
+li $t2, 1000
+add $t0, $t0, $t2
 jal print_t0
 nop
 
+li $t2, -1
 li $t0, 0xFFFFFFFF
-addi $t0, $t0, -1
+add $t0, $t0, $t2
 jal print_t0
 nop
 
@@ -26,15 +31,16 @@ nop
 
 print_t0:
 move $a0, $t0
-addi $v0, $zero, 1
+li $v0, 1
 syscall
 
-addi $a0, $zero, 10
-addi $v0, $zero, 11
+li $a0, 10
+li $v0, 11
 syscall
 jr $ra
 nop
 
 overflow:
+li $t2, 1 
 li $t0, 0x7FFFFFFF
-addi $t0, $t0, 1
+add $t0, $t0, $t2

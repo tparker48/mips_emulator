@@ -3,12 +3,38 @@ import os
 import subprocess
 import argparse
 
+from typing import Callable
+
+
+def run_test_group(group_dir: str, test_run_function: Callable):
+    test_group = []
+    for path, _dir, files in os.walk(group_dir):
+        for file in files:
+            if (file.endswith('.s')):
+                test_group.append(os.path.join(path,file[:-2]))
+
+    for test_path in test_group:
+        print("-------------------------------------")
+        print(f"{test_path}:")
+        result = test_run_function(test_path)
+        print(f"    Result: {'PASS' if result else 'FAIL'}")
+
+
+def run_assembler_test(test_path: str) -> bool:
+    asm_file = test_path+'.s'
+    bin_file = test_path+'.bin'
+    bin_exepected_file = test_path+'.bin.expected'
+
+    assemble_binary(asm_file, bin_file)
+    test_result = check_assembler_output(bin_file, bin_exepected_file)
+
+    if test_result:
+        os.remove(bin_file)
+
+    return test_result
+
 def assemble_binary(asm_file: str, bin_file: str):
     os.system(f'python -m assembler {asm_file} -o {bin_file}')
-
-def run_emulator(bin_file: str, out_file: str):
-    with open(out_file, 'w') as f_out:
-        subprocess.run(f'.\emulator\mips_sim.exe {bin_file}', stdout=f_out, stderr=f_out)
 
 def check_assembler_output(binary_file: str, reference_file: str):
     success = True
@@ -39,6 +65,28 @@ def check_assembler_output(binary_file: str, reference_file: str):
     
     return success
 
+
+def run_emulator_test(test_path: str) -> bool:
+    asm_file = test_path+'.s'
+    bin_file = test_path+'.bin'
+    out_file = test_path+'.output'
+    exepected_output_file = test_path+'.expected'
+
+    assemble_binary(asm_file, bin_file)
+    run_emulator(bin_file, out_file)
+
+    test_result = check_emulator_output(out_file, exepected_output_file)
+    
+    if (test_result):
+        os.remove(bin_file)
+        os.remove(out_file)
+    
+    return test_result
+
+def run_emulator(bin_file: str, out_file: str):
+    with open(out_file, 'w') as f_out:
+        subprocess.run(f'.\emulator\mips_sim.exe {bin_file}', stdout=f_out, stderr=f_out)
+
 def check_emulator_output(out_file: str, expected_file: str):
     success = True
 
@@ -58,61 +106,6 @@ def check_emulator_output(out_file: str, expected_file: str):
         success = False
 
     return success
-
-def run_assembler_tests():
-    root_dir = 'tests/assembler_tests/'
-    assembler_tests = []
-    for file in os.listdir(root_dir):
-        if (file.endswith('.s')):
-            assembler_tests.append(file[:-2])
-
-    for test_name in assembler_tests:
-        print("-------------------------------------")
-        print(f"{test_name}:")
-        asm_file = os.path.join(root_dir, test_name+'.s')
-        bin_file = os.path.join(root_dir, test_name+'.bin')
-        bin_exepected_file = os.path.join(root_dir, test_name+'.bin.expected')
-
-        print(f"    Assembling {asm_file}")
-        assemble_binary(asm_file, bin_file)
-
-        print(f"    Checking {bin_file}")
-        test_result = check_assembler_output(bin_file, bin_exepected_file)
-
-        if test_result:
-            os.remove(bin_file)
-
-        print(f"    Result: {'PASS' if test_result else 'FAIL'}")
-
-def run_emulator_tests():
-    root_dir = 'tests/emulator_tests/'
-    assembler_tests = []
-    for file in os.listdir(root_dir):
-        if (file.endswith('.s')):
-            assembler_tests.append(file[:-2])
-
-    for test_name in assembler_tests:
-        print("-------------------------------------")
-        print(f"{test_name}:")
-        asm_file = os.path.join(root_dir, test_name+'.s')
-        bin_file = os.path.join(root_dir, test_name+'.bin')
-        out_file = os.path.join(root_dir, test_name+'.output')
-        exepected_output_file = os.path.join(root_dir, test_name+'.expected')
-
-        print(f"    Assembling {asm_file}")
-        assemble_binary(asm_file, bin_file)
-
-        print(f"    Running Emulator {bin_file}")
-        run_emulator(bin_file, out_file)
-
-        print(f"    Checking output")
-        test_result = check_emulator_output(out_file, exepected_output_file)
-        
-        if (test_result):
-            os.remove(bin_file)
-            os.remove(out_file)
-
-        print(f"    Result: {'PASS' if test_result else 'FAIL'}")
 
 
 if __name__ == '__main__':
@@ -135,9 +128,9 @@ if __name__ == '__main__':
     args = argparser.parse_args()
 
     if (not args.assembler) and (not args.emulator):
-        run_assembler_tests()
-        run_emulator_tests()
+        run_test_group('tests/assembler_tests/', run_assembler_test)
+        run_test_group('tests/emulator_tests/', run_emulator_test)
     elif args.assembler:
-        run_assembler_tests()
+        run_test_group('tests/assembler_tests/', run_assembler_test)
     elif args.emulator:
-        run_emulator_tests()
+        run_test_group('tests/emulator_tests/', run_emulator_test)

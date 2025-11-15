@@ -14,24 +14,10 @@ def assemble(input_file: str, output_file: str, verbose: bool = False):
 
     with open(input_file) as test_input:
         data = preprocess(test_input.read())
-        print(1)
-
         toks = lexer.tokenize(data)
-        print(2)
-
-        try:
-            ir = parser.parse(toks)
-        except Exception as e:
-            traceback.print_exc()
-            print("Hello")
-
-        print(3)
-
+        ir = parser.parse(toks)
         ir = postprocess(ir, lexer.labels)
-        print(4)
-
         bytes = encode_binary(ir, verbose)
-        print(5)
-
+     
         with open(f'{output_file}', 'wb') as out_file:
             out_file.write(bytes)
