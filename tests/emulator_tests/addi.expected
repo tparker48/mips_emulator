@@ -3,4 +3,5 @@
 -1500
 -500
 -2
-Exited with code: 0
+Overflow detected!
+Exited with code: 1

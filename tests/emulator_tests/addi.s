@@ -21,7 +21,7 @@ addi $t0, $t0, -1
 jal print_t0
 nop
 
-jal exit
+jal overflow
 nop
 
 print_t0:
@@ -33,8 +33,8 @@ addi $a0, $zero, 10
 addi $v0, $zero, 11
 syscall
 jr $ra
+nop
 
-exit:
-addi $a0, $zero, 0
-addi $v0, $zero, 10
-syscall 
+overflow:
+li $t0, 0x7FFFFFFF
+addi $t0, $t0, 1

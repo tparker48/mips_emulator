@@ -65,6 +65,8 @@ void execute_trap()
             break;
         case TRAP_OVERFLOW:
             printf("Overflow detected!\n");
+            exit_flag = true;
+            exit_code = 1;
             break;
     }
 
