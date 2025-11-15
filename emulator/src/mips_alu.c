@@ -180,10 +180,6 @@ void sub() {
     write_register(EXE.rd_id, (int32_t)result);
 }
 void subu() {
-    if (EXE.rs < EXE.rt){
-        trigger_trap(pc, TRAP_OVERFLOW);
-        return;
-    }
     uint32_t result = EXE.rs - EXE.rt;
     write_register(EXE.rd_id, result);
 }
