@@ -5,7 +5,6 @@ from assembler.isa import INSTRUCTIONS, PSEUDOINSTRUCTIONS
 line_offset = True
 
 class MIPSLexer(Lexer):
-    labels = set()
     ignore = ' \t'
     tokens = {
         REGISTER,
@@ -33,6 +32,10 @@ class MIPSLexer(Lexer):
         HEX,
         BINARY
     }
+
+    def __init__(self):
+        self.labels = set()
+        super().__init__()
 
     # Token REGEX
     REGISTER = r'\$[a-zA-Z_]*[a-zA-Z0-9_]*'
@@ -62,7 +65,7 @@ class MIPSLexer(Lexer):
     @_(r'[a-zA-Z_][a-zA-Z0-9_]*\:')
     def LABEL_DEFINE(self, t):
         label = t.value.strip(':')
-        assert label not in self.labels
+        assert label not in self.labels, "Duplicate label detected!"
         self.labels.add(label)
         return t
     
