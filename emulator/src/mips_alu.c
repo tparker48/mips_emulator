@@ -165,10 +165,6 @@ void add() {
 
 void addu() {
     uint32_t result = EXE.rs + EXE.rt;
-    if (result < EXE.rs){
-        trigger_trap(pc, TRAP_OVERFLOW);
-        return;
-    }
     write_register(EXE.rd_id, result);
 }
 void sub() {
