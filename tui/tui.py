@@ -169,7 +169,7 @@ def run_emulator():
     log.write_line("Running...")
 
     with open('emulator_output.log', 'w') as f_out:
-        subprocess.run('.\emulator\mips_sim.exe tmp.bin', stdout=f_out, stderr=f_out)
+        subprocess.run('.\\emulator\\mips_sim.exe tmp.bin', stdout=f_out, stderr=f_out)
 
     with open('emulator_output.log', 'r') as f_out:
         log.write_lines(f_out.readlines())
