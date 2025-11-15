@@ -163,7 +163,7 @@ def assemble_current_text():
     with open('assembler_output.log', 'r') as f_out:
         log.write_lines(f_out.readlines())
     
-    #os.remove('assembler_output.log')
+    os.remove('assembler_output.log')
 
 def run_emulator():
     log.write_line("Running...")
