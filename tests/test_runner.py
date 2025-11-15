@@ -87,7 +87,7 @@ def run_emulator_test(test_path: str) -> bool:
 
 def run_emulator(bin_file: str, out_file: str):
     with open(out_file, 'w') as f_out:
-        subprocess.run(f'.\emulator\mips_sim.exe {bin_file}', stdout=f_out, stderr=f_out)
+        subprocess.run(f'.\\emulator\\mips_sim.exe {bin_file}', stdout=f_out, stderr=f_out)
 
 def check_emulator_output(out_file: str, expected_file: str):
     success = True
