@@ -204,25 +204,25 @@ void sltu() {
 
 // I
 void beq() {
-    uint32_t branch_addr = (uint32_t)EXE.immediate_se << 2;
+    uint32_t branch_addr = get_branch_addr();
     if (EXE.rs == EXE.rt){
         pc += branch_addr;
     }
 }
 void bne() {
-    uint32_t branch_addr = (uint32_t)EXE.immediate_se << 2;
+    uint32_t branch_addr = get_branch_addr();
     if (EXE.rs != EXE.rt){
         pc += branch_addr;
     }
 }
 void blez() {
-    uint32_t branch_addr = (uint32_t)EXE.immediate_se << 2;
+    uint32_t branch_addr = get_branch_addr();
     if (EXE.rs <= 0){
         pc += branch_addr;
     }
 }
 void bgtz() {
-    uint32_t branch_addr = (uint32_t)EXE.immediate_se << 2;
+    uint32_t branch_addr = get_branch_addr(); 
     if ((int32_t)EXE.rs > 0){
         pc += branch_addr;
     }
@@ -253,6 +253,8 @@ void andi() {
    write_register(EXE.rt_id, EXE.rs & EXE.immediate_ze ); 
 }
 void ori() {
+    //printf("ORI REG = %d\n", EXE.rs);
+    //printf("ORI IMM = %d\n", EXE.immediate_se);
     write_register(EXE.rt_id, EXE.rs | EXE.immediate_ze ); 
 }
 void lui() {
@@ -298,4 +300,8 @@ void prepare_memory_write()
     MEM.write_mem = true;
     MEM.reg_out = EXE.rt;
     MEM.alu_out = EXE.rs + EXE.immediate_se;
+}
+uint32_t get_branch_addr()
+{
+    return ((uint32_t)EXE.immediate_se << 2) - 4;
 }

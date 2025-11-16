@@ -58,3 +58,4 @@ void write_register(uint8_t reg_to_write, uint32_t out);
 void write_hilo(uint32_t new_hi, uint32_t new_lo);
 void prepare_memory_read();
 void prepare_memory_write();
+uint32_t get_branch_addr();

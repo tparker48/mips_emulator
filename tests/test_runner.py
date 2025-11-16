@@ -8,16 +8,17 @@ from typing import Callable
 ASSEMBLER_TESTS_DIR = "tests\\assembler_tests\\"
 EMULATOR_TESTS_DIR = "tests\\emulator_tests\\"
 
-def run_test_group(group_dir: str, test_run_function: Callable):
+def run_test_group(group_dir: str, test_run_function: Callable, target_list: list[str] = []):
     test_group = []
     for path, _dir, files in os.walk(group_dir):
         for file in files:
             if (file.endswith('.s')):
-                with open(os.path.join(path,file), 'r') as testfile:
-                    if testfile.readline().strip() == "# TODO":
-                        print(f"Skipping {file} (TODO)")
-                    else:
-                        test_group.append(os.path.join(path,file[:-2]))
+                if not target_list or file[:-2] in target_list:
+                    with open(os.path.join(path,file), 'r') as testfile:
+                        if testfile.readline().strip() == "# TODO":
+                            print(f"Skipping {file} (TODO)")
+                        else:
+                            test_group.append(os.path.join(path,file[:-2]))
 
     for test_path in test_group:
         print("-------------------------------------")
@@ -131,12 +132,23 @@ if __name__ == '__main__':
         help="Run only assembler tests"
     )
 
+    argparser.add_argument(
+        "-l", "--list",
+        nargs="*",
+        help= "List of tests to run"
+    )
+
     args = argparser.parse_args()
 
-    if (not args.assembler) and (not args.emulator):
-        run_test_group(ASSEMBLER_TESTS_DIR, run_assembler_test)
-        run_test_group(EMULATOR_TESTS_DIR, run_emulator_test)
-    elif args.assembler:
+
+    if args.assembler:
         run_test_group(ASSEMBLER_TESTS_DIR, run_assembler_test)
     elif args.emulator:
         run_test_group(EMULATOR_TESTS_DIR, run_emulator_test)
+    else:
+        if args.list:
+            run_test_group(ASSEMBLER_TESTS_DIR, run_assembler_test, target_list=args.list)
+            run_test_group(EMULATOR_TESTS_DIR, run_emulator_test, target_list=args.list)
+        else:
+            run_test_group(ASSEMBLER_TESTS_DIR, run_assembler_test)
+            run_test_group(EMULATOR_TESTS_DIR, run_emulator_test)
