@@ -1,7 +1,11 @@
 addi $a0, $zero, 5
-j exit
+j intermediate
 add $a0, $a0, $a0 # Executed (delay slot)
 add $a0, $a0, $a0 # Not executed
+
+intermediate2:
+j exit
+nop
 
 exit:
 addi $a0, $a0, 1
@@ -17,3 +21,7 @@ syscall
 addi $a0, $zero, 0
 addi $v0, $zero, 10
 syscall 
+
+intermediate:
+j intermediate2
+nop

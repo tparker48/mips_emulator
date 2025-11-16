@@ -64,5 +64,7 @@ void handle_syscall()
         break;
     case SYSCALL_EXIT2:
         break;
+    case SYSCALL_PRINT_UINT:
+        break;
     }
 }

@@ -14,7 +14,7 @@ addi $a0, $zero, 10
 addi $v0, $zero, 11
 syscall
 
-j exit
+jal exit
 nop
 
 print_123:

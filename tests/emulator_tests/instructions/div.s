@@ -40,6 +40,18 @@ div $t1, $t2
 jal print_hilo
 nop
 
+li $t1, 0x7FFFFFFF
+li $t2, 1
+div $t1, $t2
+jal print_hilo
+nop
+
+li $t1, 0x80000000
+li $t2, 1
+div $t1, $t2
+jal print_hilo
+nop
+
 j exit
 
 

@@ -29,6 +29,7 @@
 #define SYSCALL_WRITE_FILE 15
 #define SYSCALL_CLOSE_FILE 16
 #define SYSCALL_EXIT2 17
+#define SYSCALL_PRINT_UINT 36 
 
 void handle_syscall();
 
