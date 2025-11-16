@@ -103,13 +103,13 @@ void syscall(){
     ID.noop = true;
 }
 void mfhi() {
-    write_register(EXE.rd, hi);
+    write_register(EXE.rd_id, hi);
 }
 void mthi() {
-    write_hilo(EXE.rs, lo);
+    write_hilo(EXE.rs_id, lo);
 }
 void mflo() {
-    write_register(EXE.rd, lo);
+    write_register(EXE.rd_id, lo);
 }
 void mtlo() {
     write_hilo(hi, EXE.rs);
@@ -133,10 +133,13 @@ void div_() {
     int32_t t1 = (int32_t)EXE.rs;
     int32_t t2 = (int32_t)EXE.rt;
 
-    if (t2 == 0){
+    if (t2 == 0)
+    {
         // divide by zero exception
         return;
     }
+
+    //printf("%d/%d ... %d, %d\n", t1,t2,t1%t2, t1/t2);
     write_hilo(t1%t2, t1/t2);
 }
 void divu() {
@@ -217,7 +220,7 @@ void bne() {
 }
 void blez() {
     uint32_t branch_addr = get_branch_addr();
-    if (EXE.rs <= 0){
+    if ((int32_t)EXE.rs <= 0){
         pc += branch_addr;
     }
 }

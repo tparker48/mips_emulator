@@ -165,6 +165,11 @@ void execute_instruction()
     MEM.noop = EXE.noop;
     MEM.op_code = EXE.op_code;
 
+    MEM.write_hilo = false;
+    MEM.write_mem = false;
+    MEM.write_reg = false;
+    MEM.read_mem = false;
+
     if (EXE.noop)
     {
         return;
