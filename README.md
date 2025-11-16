@@ -1,5 +1,7 @@
 # MIPS Emulator
 
+![tui](https://github.com/tparker48/mips_emulator/blob/master/screenshot.PNG)
+
  - A MIPS CPU emulator written in C
     - Emulates full MIPS 5-stage pipeline (IF, ID, EXE, MEM, WB)
     - Forwarding and bubble insertion for RAW hazards
