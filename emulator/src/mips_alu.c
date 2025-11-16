@@ -58,9 +58,9 @@ void execute_i()
     case OP_LW: prepare_memory_read(); break;  // lw() called during MEM stage
     case OP_LBU: prepare_memory_read(); break;  // lbu() called during MEM stage
     case OP_LHU: prepare_memory_read(); break;  // lhu() called during MEM stage
-    case OP_SB: sb(); break;
-    case OP_SH: sh(); break;
-    case OP_SW: sw(); break;
+    case OP_SB: prepare_memory_write(); break;
+    case OP_SH: prepare_memory_write(); break;
+    case OP_SW: prepare_memory_write(); break;
     }
 }
 
@@ -296,6 +296,7 @@ void prepare_memory_read(){
     MEM.noop = false;
     MEM.read_mem = true;
     MEM.alu_out = EXE.rs + EXE.immediate_se;
+    MEM.register_to_write = EXE.rt_id;
 }
 void prepare_memory_write()
 {
