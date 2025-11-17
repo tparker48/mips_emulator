@@ -106,7 +106,7 @@ void mfhi() {
     write_register(EXE.rd_id, hi);
 }
 void mthi() {
-    write_hilo(EXE.rs_id, lo);
+    write_hilo(EXE.rs, lo);
 }
 void mflo() {
     write_register(EXE.rd_id, lo);
