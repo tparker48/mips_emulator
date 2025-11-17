@@ -165,7 +165,6 @@ void execute_instruction()
     MEM.noop = EXE.noop;
     MEM.op_code = EXE.op_code;
 
-    MEM.write_hilo = false;
     MEM.write_mem = false;
     MEM.write_reg = false;
     MEM.read_mem = false;
@@ -202,7 +201,6 @@ void memory_access()
     WB.noop = false;
     WB.write_from_mem = false;
     WB.write_from_alu = false;
-    WB.write_hilo = false;
 
     if (MEM.write_mem)
     {
@@ -233,12 +231,6 @@ void memory_access()
         WB.register_to_write = MEM.register_to_write;
         WB.alu_out = MEM.alu_out;
     }
-    else if (MEM.write_hilo)
-    {
-        WB.write_hilo = true;
-        WB.hi = MEM.hi;
-        WB.lo = MEM.lo;
-    }
 
     mem_forward();
 }
@@ -248,11 +240,6 @@ void write_back()
     if (WB.write_from_alu)
     {
         registers[WB.register_to_write] = WB.alu_out;
-    }
-    else if (WB.write_hilo)
-    {
-        hi = WB.hi;
-        lo = WB.lo;
     }
     else if (WB.write_from_mem)
     {

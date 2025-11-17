@@ -43,13 +43,11 @@ struct MemoryAccess
     bool noop;
     uint8_t op_code;
     uint32_t alu_out;
-    uint32_t hi, lo;
     uint32_t reg_out;
     uint8_t register_to_write;
     bool write_reg;
     bool write_mem;
     bool read_mem;
-    bool write_hilo;
 };
 
 struct WriteBack
@@ -57,11 +55,9 @@ struct WriteBack
     bool noop;
     uint32_t alu_out;
     uint32_t mem_out;
-    uint32_t hi, lo;
     uint8_t register_to_write;
     bool write_from_mem;
     bool write_from_alu;
-    bool write_hilo;
 };
 
 extern struct InstructionFetch IF;

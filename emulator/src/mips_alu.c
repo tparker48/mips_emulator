@@ -286,10 +286,8 @@ void write_register(uint8_t reg_to_write, uint32_t out)
 
 void write_hilo(uint32_t new_hi, uint32_t new_lo)
 {
-    MEM.noop = false;
-    MEM.write_hilo = true;
-    MEM.hi = new_hi;
-    MEM.lo = new_lo;
+    hi = new_hi;
+    lo = new_lo;
 }
 
 void prepare_memory_read(){
