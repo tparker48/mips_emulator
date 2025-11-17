@@ -23,7 +23,9 @@ struct InstructionDecode
 {
     bool noop;
     uint32_t instruction_word;
-    struct Forwarding forwarding;
+    struct Forwarding forwardingIF;
+    struct Forwarding forwardingEXE;
+    struct Forwarding forwardingMEM;
 };
 
 struct Execution
@@ -88,3 +90,4 @@ void write_back();
 void exe_forward();
 void mem_forward();
 bool needs_bubble(uint32_t instruction);
+void apply_forwarding(struct Forwarding*);

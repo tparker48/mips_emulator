@@ -87,9 +87,9 @@ void instruction_fetch()
 
     if (IF.forwarding.flag)
     {
-        ID.forwarding.flag = true;
-        ID.forwarding.register_id = IF.forwarding.register_id;
-        ID.forwarding.register_val = IF.forwarding.register_val;
+        ID.forwardingIF.flag = true;
+        ID.forwardingIF.register_id = IF.forwarding.register_id;
+        ID.forwardingIF.register_val = IF.forwarding.register_val;
     }
     IF.forwarding.flag = false;
 
@@ -113,6 +113,7 @@ void instruction_fetch()
         if (needs_bubble(instruction))
         {
             ID.noop = true;
+            ID.instruction_word = 0;
             return;
         }
         ID.instruction_word = instruction;
@@ -139,25 +140,9 @@ void instruction_decode()
     EXE.immediate_se = (int32_t)(int16_t)((instruction) & 0xFFFF);
     EXE.address = (instruction & 0x03FFFFFF) | (pc & 0xF0000000);
 
-    if (ID.forwarding.flag)
-    {
-        uint8_t fwd_reg_id = ID.forwarding.register_id;
-        uint32_t fwd_reg_val = ID.forwarding.register_val;
-        if (fwd_reg_id == EXE.rs_id)
-        {
-            EXE.rs = fwd_reg_val;
-        }
-        if (fwd_reg_id == EXE.rt_id)
-        {
-            EXE.rt = fwd_reg_val;
-        }
-        if (fwd_reg_id == EXE.rd_id)
-        {
-            // doesn't hurt if it's just overwritten anyways
-            EXE.rd = fwd_reg_val;
-        }
-    }
-    ID.forwarding.flag = false;
+    apply_forwarding(&ID.forwardingIF);
+    apply_forwarding(&ID.forwardingEXE);
+    apply_forwarding(&ID.forwardingMEM);
 }
 
 void execute_instruction()
@@ -237,6 +222,10 @@ void memory_access()
 
 void write_back()
 {
+    if (WB.noop){
+        return;
+    }
+
     if (WB.write_from_alu)
     {
         registers[WB.register_to_write] = WB.alu_out;
@@ -258,9 +247,9 @@ void exe_forward() {
         IF.forwarding.register_id = id;
         IF.forwarding.register_val = val;
 
-        ID.forwarding.flag = true;
-        ID.forwarding.register_id = id;
-        ID.forwarding.register_val = val;
+        ID.forwardingEXE.flag = true;
+        ID.forwardingEXE.register_id = id;
+        ID.forwardingEXE.register_val = val;
     }
 }
 
@@ -275,9 +264,9 @@ void mem_forward(){
         IF.forwarding.register_id = id;
         IF.forwarding.register_val = val;
 
-        ID.forwarding.flag = true;
-        ID.forwarding.register_id = id;
-        ID.forwarding.register_val = val;
+        ID.forwardingMEM.flag = true;
+        ID.forwardingMEM.register_id = id;
+        ID.forwardingMEM.register_val = val;
     }
 }
 
@@ -296,7 +285,6 @@ bool needs_bubble(uint32_t instruction)
     //      ^-forward--<
 
     uint8_t op_code = (instruction >> 26) & 0b111111;
-    uint8_t funct = (instruction) & 0b111111;
     uint8_t rs_id = (instruction >> 21) & 0b11111;
     uint8_t rt_id = (instruction >> 16) & 0b11111;
 
@@ -310,10 +298,28 @@ bool needs_bubble(uint32_t instruction)
             }
         }
     }
-    else if (writes_hilo(EXE.op_code, EXE.funct) && reads_hilo(op_code, funct))
-    {
-        return true;
-    }
 
     return false;
+}
+
+void apply_forwarding(struct Forwarding* forwarding){
+    if (forwarding->flag)
+    {
+        uint8_t fwd_reg_id = forwarding->register_id;
+        uint32_t fwd_reg_val = forwarding->register_val;
+        
+        if (fwd_reg_id == EXE.rs_id)
+        {
+            EXE.rs = fwd_reg_val;
+        }
+        if (fwd_reg_id == EXE.rt_id)
+        {
+            EXE.rt = fwd_reg_val;
+        }
+        if (fwd_reg_id == EXE.rd_id)
+        {
+            EXE.rd = fwd_reg_val;
+        }
+    }
+    forwarding->flag = false;
 }

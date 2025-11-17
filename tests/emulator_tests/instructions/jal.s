@@ -14,6 +14,9 @@ addi $a0, $zero, 10
 addi $v0, $zero, 11
 syscall
 
+jal empty
+nop
+
 jal exit
 nop
 
@@ -23,7 +26,11 @@ addi $v0, $zero, 1
 syscall
 # return
 jr $ra
+nop
 
+empty:
+jr $ra
+nop
 
 exit:
 addi $a0, $zero, 0

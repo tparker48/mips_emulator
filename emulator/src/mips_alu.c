@@ -139,7 +139,6 @@ void div_() {
         return;
     }
 
-    //printf("%d/%d ... %d, %d\n", t1,t2,t1%t2, t1/t2);
     write_hilo(t1%t2, t1/t2);
 }
 void divu() {
@@ -256,8 +255,6 @@ void andi() {
    write_register(EXE.rt_id, EXE.rs & EXE.immediate_ze ); 
 }
 void ori() {
-    //printf("ORI REG = %d\n", EXE.rs);
-    //printf("ORI IMM = %d\n", EXE.immediate_se);
     write_register(EXE.rt_id, EXE.rs | EXE.immediate_ze ); 
 }
 void lui() {
