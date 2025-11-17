@@ -30,6 +30,12 @@ li $t1, 0x7FFFFFFF
 jal mprint
 nop
 
+# -1 * 1 = - 0xFFFFFFFF 0xFFFFFFFF
+li $t0, -1
+li $t1, 1
+jal mprint
+nop
+
 j exit
 nop
 

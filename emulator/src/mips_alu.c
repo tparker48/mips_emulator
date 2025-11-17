@@ -116,8 +116,8 @@ void mtlo() {
 }
 void mult() {
     // hilo = rs * rt
-    int64_t t1 = (int64_t)EXE.rs;
-    int64_t t2 = (int64_t)EXE.rt;
+    int64_t t1 = (int64_t)(int32_t)EXE.rs;
+    int64_t t2 = (int64_t)(int32_t)EXE.rt;
     int64_t result = t1*t2;
     write_hilo((uint32_t)(result>>32), (uint32_t)result);
 }
