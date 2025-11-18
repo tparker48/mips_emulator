@@ -275,6 +275,10 @@ void jal() {
 // utils
 void write_register(uint8_t reg_to_write, uint32_t out)
 {
+    if (reg_to_write == 0){
+        return;
+    }
+
     MEM.noop = false;
     MEM.write_reg = true;
     MEM.register_to_write = reg_to_write;
@@ -287,7 +291,12 @@ void write_hilo(uint32_t new_hi, uint32_t new_lo)
     lo = new_lo;
 }
 
-void prepare_memory_read(){
+void prepare_memory_read()
+{
+    if (EXE.rt_id == 0){
+        return;
+    }
+
     MEM.noop = false;
     MEM.read_mem = true;
     MEM.alu_out = EXE.rs + EXE.immediate_se;

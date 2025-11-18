@@ -22,3 +22,6 @@ bin/*.bin
 
 tmp.asm
 tmp.bin
+
+# Shouldn't redistribute
+tests/tools/Mars4_5.jar
