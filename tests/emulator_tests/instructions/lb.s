@@ -2,7 +2,7 @@
 la $t0, test_byte
 
 li $t1, 0x55
-sw $t1, 0($t0)
+sb $t1, 0($t0)
 lb $a0, 0($t0)
 li $v0, 1
 syscall
@@ -11,7 +11,7 @@ li $v0, 11
 syscall
 
 li $t1, 0xF00
-sw $t1, 0($t0)
+sb $t1, 0($t0)
 lb $a0, 0($t0)
 li $v0, 1
 syscall
@@ -20,7 +20,7 @@ li $v0, 11
 syscall
 
 li $t1, 0xFFFFFFFF
-sw $t1, 0($t0)
+sb $t1, 0($t0)
 lb $a0, 0($t0)
 li $v0, 1
 syscall

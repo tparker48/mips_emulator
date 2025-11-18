@@ -1,5 +1,5 @@
 .text
-la $t0, test_byte
+la $t0, test_word
 
 lw $a0, 0($t0)
 li $v0, 1
@@ -50,4 +50,4 @@ li $v0, 10
 syscall
 
 .data
-test_byte: .byte 0xAA
+test_word: .word 0xAA

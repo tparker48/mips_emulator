@@ -47,47 +47,71 @@ uint8_t *access_mem_bytes(uint32_t address, int len)
     }
 }
 
+uint8_t read_mem_byte(uint32_t addr) {
+    return *access_mem_bytes(addr, 1);
+}
+
+uint16_t read_mem_halfword(uint32_t addr) {
+    return (read_mem_byte(addr) << 8) |
+           (read_mem_byte(addr + 1));
+}
+
+uint32_t read_mem_word(uint32_t addr) {
+    return (read_mem_byte(addr)     << 24) |
+           (read_mem_byte(addr + 1) << 16) |
+           (read_mem_byte(addr + 2) << 8)  |
+            read_mem_byte(addr + 3);
+}
+
+void write_mem_byte(uint32_t addr, uint8_t byte) {
+    *access_mem_bytes(addr, 1) = byte;
+}
+
+void write_mem_halfword(uint32_t addr, uint16_t v) {
+    write_mem_byte(addr,     (v >> 8) & 0xFF);
+    write_mem_byte(addr + 1,  v       & 0xFF);
+}
+
+void write_mem_word(uint32_t addr, uint32_t v) {
+    write_mem_byte(addr,     (v >> 24) & 0xFF);
+    write_mem_byte(addr + 1, (v >> 16) & 0xFF);
+    write_mem_byte(addr + 2, (v >> 8)  & 0xFF);
+    write_mem_byte(addr + 3,  v        & 0xFF);
+}
+
 uint8_t *access_mem_byte(uint32_t address){
     return access_mem_bytes(address, 1);
-}
-uint16_t *access_mem_halfword(uint32_t address){
-    assert((address & 0b1) == 0);
-    return (uint16_t *)access_mem_bytes(address, 2);
-}
-uint32_t *access_mem_word(uint32_t address){
-    assert((address & 0b11) == 0);
-    return (uint32_t*)access_mem_bytes(address, 4);
 }
 
 void sb()
 {
-    *access_mem_byte(MEM.alu_out) = (uint8_t)MEM.reg_out;
+    write_mem_byte(MEM.alu_out, MEM.reg_out);
 }
 void sh()
 {
-    *access_mem_halfword(MEM.alu_out) = (uint16_t)MEM.reg_out;
+    write_mem_halfword(MEM.alu_out, MEM.reg_out);
 }
 void sw()
 {
-    *access_mem_word(MEM.alu_out) = (uint32_t)MEM.reg_out;
+    write_mem_word(MEM.alu_out, MEM.reg_out);
 }
 void lb()
 {
-    WB.mem_out = (uint32_t)(int32_t)(int8_t)*access_mem_byte(MEM.alu_out);
+    WB.mem_out = (int8_t)read_mem_byte(MEM.alu_out);
 }
 void lh()
 {
-    WB.mem_out = (uint32_t)(int32_t)(int16_t)*access_mem_halfword(MEM.alu_out);
+    WB.mem_out = (int16_t)read_mem_halfword(MEM.alu_out);
 }
 void lw()
 {
-    WB.mem_out = *access_mem_word(MEM.alu_out);
+    WB.mem_out = read_mem_word(MEM.alu_out);
 }
 void lbu()
 {
-    WB.mem_out = (uint32_t)*access_mem_byte(MEM.alu_out);
+    WB.mem_out = read_mem_byte(MEM.alu_out);
 }
 void lhu()
 {
-    WB.mem_out = (uint32_t)*access_mem_halfword(MEM.alu_out);
+    WB.mem_out = read_mem_halfword(MEM.alu_out);
 }

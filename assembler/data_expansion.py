@@ -13,7 +13,6 @@ def expand_ascii(ir: dict, _: int) -> list[dict]:
     lineno = ir['lineno']
     return [{'type': 'raw_byte', 'val': b, 'lineno': lineno} for b in ir['literal']['val']]
 
-
 def expand_align(ir: dict, addr: int) -> list[dict]:
     lineno = ir.get('lineno', 0)
     val = ir['literal']['val']

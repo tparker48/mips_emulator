@@ -109,7 +109,7 @@ void instruction_fetch()
         }
     }
     else{
-        uint32_t instruction = *access_mem_word(pc);
+        uint32_t instruction = read_mem_word(pc);
         if (needs_bubble(instruction))
         {
             ID.noop = true;

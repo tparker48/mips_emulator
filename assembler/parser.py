@@ -98,22 +98,24 @@ class MIPSParser(Parser):
 
     @_('ASCII STRING')
     def data_decl(self, p):
+        string = p.STRING.strip('"').encode('utf-8').decode('unicode_escape')
         return [{
             'type': 'data_decl',
             'data_type': 'ascii',
             'literal': {
                 'type':'string', 
-                'val': [ord(c) for c in p.STRING.strip('"')]
+                'val': [ord(c) for c in string]
             }}]
     
     @_('ASCIIZ STRING')
     def data_decl(self, p):
+        string = p.STRING.strip('"').encode('utf-8').decode('unicode_escape')
         return [{
             'type': 'data_decl',
             'data_type': 'asciiz',
             'literal': {
                 'type':'string', 
-                'val': [ord(c) for c in p.STRING.strip('"')]+[0]
+                'val': [ord(c) for c in string]+[0]
             }}]
 
     # Instruction Call

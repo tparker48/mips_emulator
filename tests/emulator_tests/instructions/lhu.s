@@ -1,8 +1,8 @@
 .text
-la $t0, test_byte
+la $t0, test_half
 
 li $t1, 0x55
-sw $t1, 0($t0)
+sh $t1, 0($t0)
 lhu $a0, 0($t0)
 li $v0, 1
 syscall
@@ -11,7 +11,7 @@ li $v0, 11
 syscall
 
 li $t1, 0xFF00
-sw $t1, 0($t0)
+sh $t1, 0($t0)
 lhu $a0, 0($t0)
 li $v0, 1
 syscall
@@ -20,7 +20,7 @@ li $v0, 11
 syscall
 
 li $t1, 0xFFFF0000
-sw $t1, 0($t0)
+sh $t1, 0($t0)
 lhu $a0, 0($t0)
 li $v0, 1
 syscall
@@ -29,7 +29,7 @@ li $v0, 11
 syscall
 
 li $t1, 0xFFFFFFFF
-sw $t1, 0($t0)
+sh $t1, 0($t0)
 lhu $a0, 0($t0)
 li $v0, 1
 syscall
@@ -43,4 +43,4 @@ li $v0, 10
 syscall
 
 .data
-test_byte: .byte 0xAA
+test_half: .half 0xAA

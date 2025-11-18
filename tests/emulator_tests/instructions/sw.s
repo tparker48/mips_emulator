@@ -21,14 +21,7 @@ li $a0, 0
 syscall
 
 load_and_print_bytes:
-lbu $a0, 0($t5)
-li $v0, 1
-syscall
-li $a0, 10
-li $v0, 11
-syscall
-
-lbu $a0, 1($t5)
+lbu $a0, 3($t5)
 li $v0, 1
 syscall
 li $a0, 10
@@ -42,7 +35,14 @@ li $a0, 10
 li $v0, 11
 syscall
 
-lbu $a0, 3($t5)
+lbu $a0, 1($t5)
+li $v0, 1
+syscall
+li $a0, 10
+li $v0, 11
+syscall
+
+lbu $a0, 0($t5)
 li $v0, 1
 syscall
 li $a0, 10

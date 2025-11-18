@@ -20,16 +20,6 @@ void swap_word_endianness(uint32_t* val)
 
 void write_to_memory(void* bytes, int size, uint8_t memory_segment[], int memory_segment_size)
 {
-    // data should be big-endian
-    if (!system_is_big_endian())
-    {
-        uint32_t *start_addr = (uint32_t *)bytes;
-        int word_count = size / sizeof(uint32_t);
-        for (int i = 0; i < word_count; i++)
-        {
-            swap_word_endianness((start_addr) + i);
-        }
-    }
     if (size > memory_segment_size)
     {
         fprintf(stderr, "Program text length limit exceeded\n");
