@@ -1,5 +1,6 @@
 import struct
 import os
+import sys
 import subprocess
 import argparse
 
@@ -8,6 +9,8 @@ from typing import Callable
 ASSEMBLER_TESTS_DIR = "tests\\assembler_tests\\"
 EMULATOR_TESTS_DIR = "tests\\emulator_tests\\"
 DIFFERENTIAL_TESTS_DIR = "tests\\differential_tests\\"
+
+MARS_JAR_PATH = "tests\\tools\\Mars4_5.jar"
 
 def run_test_group(group_dir: str, test_run_function: Callable, target_list: list[str] = []):
     test_group = []
@@ -122,10 +125,16 @@ def run_differential_test(test_path: str) -> bool:
     out_file = test_path+'.output'
     mars_out_file = test_path+'.mars_output'
     
+    if not os.path.exists(MARS_JAR_PATH):
+        print(f"ERROR: '{MARS_JAR_PATH}' not found.")
+        print("Differential tests require Mars4_5.jar.")
+        print("Please see: tests/tools/README.md")
+        sys.exit(1)
+
     assemble_binary(asm_file, bin_file)
     run_emulator(bin_file, out_file)
     with open (mars_out_file, 'w') as out:
-        subprocess.run(f'java -jar tests\\tools\\Mars4_5.jar {asm_file}', stdout=out, stderr=out)
+        subprocess.run(f'java -jar {MARS_JAR_PATH} {asm_file}', stdout=out, stderr=out)
 
     with open(mars_out_file, 'r') as mars_out, open(out_file, 'r') as emulator_out:
         mars_output = mars_out.readlines()
