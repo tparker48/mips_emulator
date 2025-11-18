@@ -12,6 +12,6 @@ https://github.com/dpetersanderson/MARS/releases/tag/v.4.5.1
 
 ## Running the Tests
 - Run **all** tests:
-  - `python tests/test_runner.py`
+ `python tests/test_runner.py`
 - Run **only differential** tests:
-  - `python tests/test_runner.py -d`
+ `python tests/test_runner.py -d`
