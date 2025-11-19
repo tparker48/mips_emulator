@@ -79,10 +79,6 @@ void write_mem_word(uint32_t addr, uint32_t v) {
     write_mem_byte(addr + 3,  v        & 0xFF);
 }
 
-uint8_t *access_mem_byte(uint32_t address){
-    return access_mem_bytes(address, 1);
-}
-
 void sb()
 {
     write_mem_byte(MEM.alu_out, MEM.reg_out);

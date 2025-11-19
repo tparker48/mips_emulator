@@ -191,19 +191,24 @@ def expand_nop(ir_data: dict) -> list[dict]:
 
 PSEUDO_EXPANDERS = {
     'move': expand_move,
-    'neg': expand_neg,
-    'not': expand_not,
     'clear': expand_clear,
-    'la': expand_la,
     'li': expand_li,
+    'la': expand_la,
+    'nop': expand_nop,
+    'not': expand_not,
+    'neg': expand_neg,
     'b': expand_b,
-    'blt': expand_blt, 
-    'bgt': expand_bgt, 
-    'ble': expand_ble, 
-    'bge': expand_bge,
+    # bal
     'beqz': expand_beqz,
     'bnez': expand_bnez,
+    'blt': expand_blt, 
+    'ble': expand_ble, 
+    'bgt': expand_bgt, 
+    'bge': expand_bge,
+    #abs
+    #mul
+    
+    # not real pseudos
     'push': expand_push,
     'pop': expand_pop,
-    'nop': expand_nop,
 }
