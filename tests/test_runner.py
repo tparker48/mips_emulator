@@ -6,13 +6,16 @@ import argparse
 
 from typing import Callable
 
-ASSEMBLER_TESTS_DIR = "tests\\assembler_tests\\"
-EMULATOR_TESTS_DIR = "tests\\emulator_tests\\"
-DIFFERENTIAL_TESTS_DIR = "tests\\differential_tests\\"
+ASSEMBLER_TESTS_DIR = os.path.join("tests","assembler_tests")
+EMULATOR_TESTS_DIR = os.path.join("tests","emulator_tests")
+DIFFERENTIAL_TESTS_DIR = os.path.join("tests","differential_tests")
 
-MARS_JAR_PATH = "tests\\tools\\Mars4_5.jar"
+EMULATOR_PATH = os.path.join("emulator","mips_sim")
+MARS_PATH = os.path.join("tests","tools","Mars4_5.jar")
 
-def run_test_group(group_dir: str, test_run_function: Callable, target_list: list[str] = []):
+
+def run_test_group(group_dir: str, test_run_function: Callable, target_list: list[str] = []) -> list[str]:
+    failed_tests = []
     test_group = []
     for path, _dir, files in os.walk(group_dir):
         for file in files:
@@ -30,6 +33,10 @@ def run_test_group(group_dir: str, test_run_function: Callable, target_list: lis
         result = test_run_function(test_path)
         print(f"    Result: {'PASS' if result else 'FAIL'}")
 
+        if not result:
+            failed_tests.append(test_path)
+    
+    return failed_tests
 
 def run_assembler_test(test_path: str) -> bool:
     asm_file = test_path+'.s'
@@ -96,7 +103,7 @@ def run_emulator_test(test_path: str) -> bool:
 
 def run_emulator(bin_file: str, out_file: str):
     with open(out_file, 'w') as f_out:
-        subprocess.run(f'.\\emulator\\mips_sim.exe {bin_file}', stdout=f_out, stderr=f_out)
+        subprocess.run([EMULATOR_PATH, bin_file], stdout=f_out, stderr=f_out)
 
 def check_emulator_output(out_file: str, expected_file: str) -> bool:
     success = True
@@ -107,9 +114,6 @@ def check_emulator_output(out_file: str, expected_file: str) -> bool:
     
     for i in range(min(len(out_lines), len(expected_lines))):
         if out_lines[i] != expected_lines[i]:
-            print(f'    Output line {i+1} does not match!')
-            print(f'        Expected: "{expected_lines[i].strip()}"')
-            print(f'        Actual:   "{out_lines[i].strip()}"')
             success = False
     
     if len(out_lines) != len(expected_lines):
@@ -125,8 +129,8 @@ def run_differential_test(test_path: str) -> bool:
     out_file = test_path+'.output'
     mars_out_file = test_path+'.mars_output'
     
-    if not os.path.exists(MARS_JAR_PATH):
-        print(f"ERROR: '{MARS_JAR_PATH}' not found.")
+    if not os.path.exists(MARS_PATH):
+        print(f"ERROR: '{MARS_PATH}' not found.")
         print("Differential tests require Mars4_5.jar.")
         print("Please see: tests/tools/README.md")
         sys.exit(1)
@@ -134,7 +138,7 @@ def run_differential_test(test_path: str) -> bool:
     assemble_binary(asm_file, bin_file)
     run_emulator(bin_file, out_file)
     with open (mars_out_file, 'w') as out:
-        subprocess.run(f'java -jar {MARS_JAR_PATH} {asm_file}', stdout=out, stderr=out)
+        subprocess.run(['java', '-jar', MARS_PATH, asm_file], stdout=out, stderr=out)
 
     with open(mars_out_file, 'r') as mars_out, open(out_file, 'r') as emulator_out:
         mars_output = mars_out.readlines()
@@ -153,9 +157,16 @@ def run_differential_test(test_path: str) -> bool:
 def check_differential_output(emulator_output: list[str], mars_output: list[str]) -> bool:
     success = True
 
+
+    print("Emulator out:")
+    print('\n'.join(emulator_output))
+    print('------------------')
+    print("MARS out:")
+    print('\n'.join(mars_output))
+
     # remove boilerplate lines etc
     emulator_output = emulator_output[:-2]
-    mars_output = mars_output[2:-2] 
+    #mars_output = mars_output[2:-2] 
 
     for i in range(min(len(emulator_output), len(mars_output))):
         if emulator_output[i] != mars_output[i]:
@@ -169,6 +180,7 @@ def check_differential_output(emulator_output: list[str], mars_output: list[str]
         success = False
 
     return success
+
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(
@@ -210,10 +222,26 @@ if __name__ == '__main__':
         run_as = True
         run_df = True
 
+    failed_tests = []
+
     if run_as:
-        run_test_group(ASSEMBLER_TESTS_DIR, run_assembler_test, target_list=args.list)
+        failed_tests.extend(
+            run_test_group(ASSEMBLER_TESTS_DIR, run_assembler_test, target_list=args.list)
+        )
+            
     if run_em:
-        run_test_group(EMULATOR_TESTS_DIR, run_emulator_test, target_list=args.list)
+        failed_tests.extend(
+            run_test_group(EMULATOR_TESTS_DIR, run_emulator_test, target_list=args.list)
+        )
     if run_df:
-        run_test_group(DIFFERENTIAL_TESTS_DIR, run_differential_test, target_list=args.list)
+        failed_tests.extend(
+            run_test_group(DIFFERENTIAL_TESTS_DIR, run_differential_test, target_list=args.list)
+        )
     
+    if failed_tests:
+        print("The following tests failed:")
+        print('\n'.join(failed_tests))
+        sys.exit(1)
+    else:
+        print("All tests passed!")
+        sys.exit(0)

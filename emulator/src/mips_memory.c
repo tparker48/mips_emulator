@@ -10,7 +10,7 @@ uint8_t kernel[sizeof(uint8_t) * KERNEL_SIZE];
 uint32_t kernel_start_addr;
 uint32_t kernel_exception_vector_addr;
 
-uint8_t *access_mem_bytes(uint32_t address, int len)
+uint8_t* access_mem_bytes(uint32_t address, int len)
 {
     uint32_t address_end = address + len - 1;
     if (address_end < address)

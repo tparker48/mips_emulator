@@ -1,0 +1,23 @@
+name: Tests
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Master
+        uses: actions/checkout@v4
+      - name: Download MARS
+        run: curl -L -o tests/tools/Mars4_5.jar https://github.com/dpetersanderson/MARS/releases/download/v.4.5.1/Mars4_5.jar
+      - name: Initialize MARS
+        run: java -jar tests/tools/Mars4_5.jar tests/differential_tests/blank.s
+      - name: Buld Emulator
+        run: cd emulator; make; cd ..
+      - name: Install python modules
+        run: pip install -r requirements.txt
+      - name: Run Tests
+        run: python -u tests/test_runner.py
+        

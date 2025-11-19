@@ -40,6 +40,8 @@ void write_mem_byte(uint32_t addr, uint8_t byte);
 void write_mem_halfword(uint32_t addr, uint16_t v);
 void write_mem_word(uint32_t addr, uint32_t v);
 
+uint8_t* access_mem_bytes(uint32_t address, int len);
+
 void sb();
 void sh();
 void sw();
