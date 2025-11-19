@@ -157,16 +157,9 @@ def run_differential_test(test_path: str) -> bool:
 def check_differential_output(emulator_output: list[str], mars_output: list[str]) -> bool:
     success = True
 
-
-    print("Emulator out:")
-    print('\n'.join(emulator_output))
-    print('------------------')
-    print("MARS out:")
-    print('\n'.join(mars_output))
-
     # remove boilerplate lines etc
     emulator_output = emulator_output[:-2]
-    #mars_output = mars_output[2:-2] 
+    mars_output = mars_output[2:-2] 
 
     for i in range(min(len(emulator_output), len(mars_output))):
         if emulator_output[i] != mars_output[i]:
