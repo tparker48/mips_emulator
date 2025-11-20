@@ -31,13 +31,17 @@ struct InstructionDecode
 struct Execution
 {
     bool noop;
+    uint32_t instruction_word;
     uint8_t op_code;
     uint8_t shamt, funct;
     uint32_t rs, rt, rd;
     uint8_t rs_id, rt_id, rd_id;
     uint32_t immediate_ze;
     int32_t immediate_se;
+    uint32_t immediate_sll16;
     uint32_t address;
+    int32_t offset;
+    uint8_t bp;
 };
 
 struct MemoryAccess

@@ -13,13 +13,6 @@ balc
 bc
 beq
 bgez
-ble
-bge
-bgt
-blt
-beq
-bne
-zalc
 beqc
 bnec
 beqzc
@@ -105,5 +98,9 @@ xori
 
 # Psuedos
 b
+ble
+bge
+bgt
+blt
 bal
 lui

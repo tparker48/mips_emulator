@@ -122,11 +122,20 @@ void instruction_fetch()
     pc += 4;
 }
 
+int32_t sign_extend_26(uint32_t x)
+{
+    x &= 0x03FFFFFF;    
+    if (x & 0x02000000) 
+        x |= 0xFC000000;
+    return (int32_t)x;
+}
+
 void instruction_decode()
 {
     EXE.noop = ID.noop;
 
     uint32_t instruction = ID.instruction_word;
+    EXE.instruction_word = ID.instruction_word;
     EXE.op_code = (instruction >> 26) & 0b111111;
     EXE.rs_id = (instruction >> 21) & 0b11111;
     EXE.rt_id = (instruction >> 16) & 0b11111;
@@ -138,7 +147,10 @@ void instruction_decode()
     EXE.funct = (instruction) & 0b111111;
     EXE.immediate_ze = (instruction) & 0xFFFF;
     EXE.immediate_se = (int32_t)(int16_t)((instruction) & 0xFFFF);
+    EXE.immediate_sll16 = (uint32_t)(EXE.immediate_se << 16);
     EXE.address = (instruction & 0x03FFFFFF) | (pc & 0xF0000000);
+    EXE.offset = (sign_extend_26(instruction)) << 2;
+    EXE.bp = (instruction >> 6) & 0b11;
 
     apply_forwarding(&ID.forwardingIF);
     apply_forwarding(&ID.forwardingEXE);

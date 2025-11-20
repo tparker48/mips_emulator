@@ -36,10 +36,14 @@ void addu()
 }
 void align()
 {
+    uint32_t offset = 8 * EXE.bp;
+    write_register(EXE.rd_id, (
+        (EXE.rt << offset) | (EXE.rs >> (32-offset))
+    ));
 }
 void aluipc()
 {
-
+    write_register(EXE.rs_id, ~0x0FFFF & (pc + EXE.immediate_sll16));
 }
 void and()
 {
@@ -51,22 +55,31 @@ void andi()
 }
 void aui()
 {
-
+    write_register(EXE.rt_id, EXE.rs + EXE.immediate_sll16);
 }
 void auipc()
 {
-
+    write_register(EXE.rs_id, pc + EXE.immediate_sll16);
 }
 void balc()
 {
-
+    // TODO
+    // no delay slot
+    // no forbidden slot
+    write_register(ra, pc);
+    pc += EXE.offset;
 }
 void bc()
 {
-
+    // TODO
+    // no delay slot
+    // no forbidden slot
+    pc += EXE.offset;
 }
 void beq()
 {
+    // TODO
+    // check forbidden slots or someting
     uint32_t branch_addr = get_branch_addr();
     if (EXE.rs == EXE.rt){
         pc += branch_addr;
@@ -74,38 +87,10 @@ void beq()
 }
 void bgez()
 {
-
-}
-void ble()
-{
-
-}
-void bge()
-{
-
-}
-void bgt()
-{
-
-}
-void blt()
-{
-
-}
-void beq()
-{
-
-}
-void bne()
-{
     uint32_t branch_addr = get_branch_addr();
-    if (EXE.rs != EXE.rt){
+    if ((int32_t)EXE.rs >= 0){
         pc += branch_addr;
     }
-}
-void zalc()
-{
-
 }
 void beqc()
 {
@@ -147,7 +132,10 @@ void bltz()
 }
 void bne()
 {
-
+    uint32_t branch_addr = get_branch_addr();
+    if (EXE.rs != EXE.rt){
+        pc += branch_addr;
+    }
 }
 void bovc()
 {
@@ -157,7 +145,7 @@ void bnvc()
 {
 
 }
-void break()
+void break_()
 {
 
 }
@@ -184,12 +172,12 @@ void div_()
 }
 void mod()
 {
+}
 void div_()
 {
     int32_t t1 = (int32_t)EXE.rs;
     int32_t t2 = (int32_t)EXE.rt;
     write_register(EXE.rd_id, t1%t2);
-}
 }
 void divu()
 {
