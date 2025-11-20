@@ -149,6 +149,8 @@ void instruction_decode()
     EXE.immediate_se = (int32_t)(int16_t)((instruction) & 0xFFFF);
     EXE.immediate_sll16 = (uint32_t)(EXE.immediate_se << 16);
     EXE.address = (instruction & 0x03FFFFFF) | (pc & 0xF0000000);
+    EXE.msb = (instruction >> 6) & 0b11111;
+    EXE.lsb = (instruction >> 11)& 0b11111;
     EXE.offset = (sign_extend_26(instruction)) << 2;
     EXE.bp = (instruction >> 6) & 0b11;
 

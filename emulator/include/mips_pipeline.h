@@ -41,6 +41,8 @@ struct Execution
     uint32_t immediate_sll16;
     uint32_t address;
     int32_t offset;
+    uint8_t msb;
+    uint8_t lsb;
     uint8_t bp;
 };
 
