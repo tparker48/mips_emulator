@@ -9,8 +9,6 @@ and
 andi
 aui
 auipc
-b
-bal
 balc
 bc
 beq
@@ -56,7 +54,6 @@ lhu
 ll
 lle
 lsa
-lui
 lw
 lwpc
 mul
@@ -105,3 +102,8 @@ tne
 wsbh
 xor
 xori
+
+# Psuedos
+b
+bal
+lui
