@@ -319,7 +319,7 @@ void jal()
 void jalr()
 {
     // TODO Delay / Forbidden stuff
-    write_register(ra, pc);
+    write_register(EXE.rd_id, pc);
     pc = EXE.rs;
 }
 void jialc()
@@ -330,10 +330,6 @@ void jialc()
 void jic()
 {
 
-}
-void jr()
-{
-    pc = EXE.rs;
 }
 void lb()
 {
