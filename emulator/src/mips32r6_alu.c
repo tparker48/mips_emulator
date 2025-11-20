@@ -27,7 +27,7 @@ void addiu()
 }
 void addiupc()
 {
-
+    write_register(EXE.rs_id, pc + EXE.immediate_se);
 }
 void addu()
 {
@@ -36,7 +36,6 @@ void addu()
 }
 void align()
 {
-
 }
 void aluipc()
 {
