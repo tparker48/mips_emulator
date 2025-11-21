@@ -56,14 +56,14 @@ void trigger_trap(uint32_t current_pc, uint32_t cause_code)
 void execute_trap()
 {
     switch(trap_cause) {
-        case TRAP_SYSCALL:
+        case EXCEPT_SYSCALL:
             handle_syscall();
             break;
-        case TRAP_IBUS:
+        case EXCEPT_IBUS:
             exit_flag = true;
             exit_code = 1;
             break;
-        case TRAP_OVERFLOW:
+        case EXCEPT_OVERFLOW:
             printf("Overflow detected!\n");
             exit_flag = true;
             exit_code = 1;
@@ -105,7 +105,7 @@ void instruction_fetch()
 
         if (pipeline_empty()){
             trap_pending = true;
-            trap_cause = TRAP_IBUS;
+            trap_cause = EXCEPT_IBUS;
         }
     }
     else{

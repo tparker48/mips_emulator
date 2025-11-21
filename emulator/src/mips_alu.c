@@ -159,7 +159,7 @@ void add() {
 
     if (result > INT32_MAX || result < INT32_MIN)
     {
-        trigger_trap(pc, TRAP_OVERFLOW);
+        trigger_trap(pc, EXCEPT_OVERFLOW);
         return;
     }
     write_register(EXE.rd_id, (int32_t)result);
@@ -176,7 +176,7 @@ void sub() {
 
     if (result > INT32_MAX || result < INT32_MIN)
     {
-        trigger_trap(pc, TRAP_OVERFLOW);
+        trigger_trap(pc, EXCEPT_OVERFLOW);
         return;
     }
     write_register(EXE.rd_id, (int32_t)result);
@@ -236,7 +236,7 @@ void addi() {
 
     if (result > INT32_MAX || result < INT32_MIN)
     {
-        trigger_trap(pc, TRAP_OVERFLOW);
+        trigger_trap(pc, EXCEPT_OVERFLOW);
         return;
     }
     write_register(EXE.rt_id, (int32_t)result);

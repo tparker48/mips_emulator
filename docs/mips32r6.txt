@@ -45,7 +45,6 @@ lbu
 lh
 lhu
 ll
-lle
 lsa
 lw
 lwpc
@@ -62,7 +61,6 @@ rotr
 rotrv
 sb
 sc
-sce
 sdbbp
 seb
 seh

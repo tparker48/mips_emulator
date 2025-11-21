@@ -15,7 +15,7 @@ void add()
 
     if (result > INT32_MAX || result < INT32_MIN)
     {
-        trigger_trap(pc, TRAP_OVERFLOW);
+        trigger_trap(pc, EXCEPT_OVERFLOW);
         return;
     }
     write_register(EXE.rd_id, (int32_t)result);
@@ -207,7 +207,7 @@ void bnvc()
 }
 void break_()
 {
-    trigger_trap(pc, TRAP_BREAKPOINT);
+    trigger_trap(pc, EXCEPT_BREAKPOINT);
 }
 void clo()
 {
@@ -324,48 +324,51 @@ void jalr()
 }
 void jialc()
 {
+    // TODO Delay / Forbidden stuff
     write_register(ra, pc);
     pc = EXE.immediate_se + EXE.rt;
 }
 void jic()
 {
-
+    // TODO Delay / Forbidden stuff
+    pc = EXE.immediate_se + EXE.rt;
 }
 void lb()
 {
-
+    // TODO MEM
 }
 void lbu()
 {
+    // TODO MEM
 
 }
 void lh()
 {
+    // TODO MEM
 
 }
 void lhu()
 {
+    // TODO MEM
 
 }
 void ll()
 {
-
-}
-void lle()
-{
-
+    // TODO MEM
+    // TODO atomic?
 }
 void lsa()
 {
-
+    write_register(EXE.rd_id, (EXE.rs << (EXE.bp+1)) + EXE.rt);
 }
 void lw()
 {
+    // TODO MEM
 
 }
 void lwpc()
 {
-
+    // TODO MEM
 }
 void mul()
 {
@@ -409,59 +412,59 @@ void ori()
 }
 void pause()
 {
-
+    // nop
 }
 void pref()
 {
-
+    // nop
 }
 void rotr()
 {
-
+    uint32_t result = (EXE.rt >> EXE.shamt | EXE.rt << (32-EXE.shamt));
+    write_register(EXE.rd_id, result);
 }
 void rotrv()
 {
-
+    uint8_t shamt = EXE.rs & 0b11111;
+    uint32_t result = (EXE.rt >> shamt | EXE.rt << (32-shamt));
+    write_register(EXE.rd_id, result);
 }
 void sb()
 {
-
+    // TODO MEM
 }
 void sc()
 {
-
-}
-void sce()
-{
-
+    // TODO MEM
+    // TODO atomic?
 }
 void sdbbp()
 {
-
+    trigger_trap(pc, EXCEPT_BREAKPOINT);
 }
 void seb()
 {
-
+    write_register(EXE.rd_id, (uint32_t)(int32_t)(int8_t)EXE.rt);
 }
 void seh()
 {
-
+    write_register(EXE.rd_id, (uint32_t)(int32_t)(int16_t)EXE.rt);
 }
 void seleqz()
 {
-
+    write_register(EXE.rd_id, EXE.rt != 0 ? 0 : EXE.rs);
 }
 void selnez()
 {
-
+    write_register(EXE.rd_id, EXE.rt == 0 ? 0 : EXE.rs);
 }
 void sh()
 {
-
+    // TODO MEM
 }
 void sigrie()
 {
-
+    trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
 }
 void sll() 
 {
@@ -469,7 +472,12 @@ void sll()
 }
 void sllv()
 {
-
+    if (EXE.rs < 32){
+        write_register(EXE.rd_id, EXE.rt << EXE.rs);
+    }
+    else{
+        write_register(EXE.rd_id, 0);
+    }
 }
 void slt()
 {
@@ -500,7 +508,15 @@ void sra()
 }
 void srav()
 {
+    int32_t val = (int32_t)EXE.rt;
+    uint8_t shamt = EXE.rs & 0b11111;
+    uint32_t result = ((uint32_t)val) >> shamt;
 
+    if (val < 0){
+        result |= ~((0xFFFFFFFFu) >> shamt);
+    }
+
+    write_register(EXE.rd_id, result);
 }
 void srl() 
 {
@@ -508,7 +524,8 @@ void srl()
 }
 void srlv()
 {
-
+    uint8_t shamt = EXE.rs & 0b11111;
+    write_register(EXE.rd_id, EXE.rt >> shamt);
 }
 void sub()
 {
@@ -518,7 +535,7 @@ void sub()
 
     if (result > INT32_MAX || result < INT32_MIN)
     {
-        trigger_trap(pc, TRAP_OVERFLOW);
+        trigger_trap(pc, EXCEPT_OVERFLOW);
         return;
     }
     write_register(EXE.rd_id, (int32_t)result);
@@ -530,48 +547,63 @@ void subu()
 }
 void sw()
 {
-
+    // TODO MEM
 }
 void sync()
 {
-
+    // nop
 }
 void synci()
 {
-
+    // nop
 }
 void syscall()
 {
-    trigger_trap(pc, 8);
+    trigger_trap(pc, EXCEPT_SYSCALL);
     ID.noop = true;
 }
 void teq()
 {
-
+    if (EXE.rs == EXE.rt) {
+        trigger_trap(pc, EXCEPT_TRAP);
+    }
 }
 void tge()
 {
-
+    if ((int32_t)EXE.rs >= (int32_t)EXE.rt) {
+        trigger_trap(pc, EXCEPT_TRAP);
+    }
 }
 void tgeu()
 {
-
+    if (EXE.rs >= EXE.rt) {
+        trigger_trap(pc, EXCEPT_TRAP);
+    }
 }
 void tlt()
 {
-
+    if ((int32_t)EXE.rs < (int32_t)EXE.rt) {
+        trigger_trap(pc, EXCEPT_TRAP);
+    }
 }
 void tltu()
 {
-
+    if (EXE.rs < EXE.rt) {
+        trigger_trap(pc, EXCEPT_TRAP);
+    }
 }
 void tne()
 {
-
+    if (EXE.rs != EXE.rt) {
+        trigger_trap(pc, EXCEPT_TRAP);
+    }
 }
 void wsbh()
 {
-
+    uint32_t result =
+        ((EXE.rt & 0x00FF00FF) << 8)  |
+        ((EXE.rt & 0xFF00FF00) >> 8);
+    write_register(EXE.rd_id, result);
 }
 void xor()
 {
@@ -579,5 +611,5 @@ void xor()
 }
 void xori()
 {
-
+    write_register(EXE.rt_id, EXE.rs ^ EXE.immediate_ze);
 }
