@@ -44,7 +44,7 @@ struct Execution
     uint8_t msb;
     uint8_t lsb;
     uint8_t bp;
-    uint8_t sa;
+    uint8_t r;
 };
 
 struct MemoryAccess

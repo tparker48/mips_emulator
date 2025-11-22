@@ -153,6 +153,7 @@ void instruction_decode()
     EXE.lsb = (instruction >> 11)& 0b11111;
     EXE.offset = (sign_extend_26(instruction)) << 2;
     EXE.bp = (instruction >> 6) & 0b11;
+    EXE.r = (instruction >> 21) & 0b1;
 
     apply_forwarding(&ID.forwardingIF);
     apply_forwarding(&ID.forwardingEXE);
