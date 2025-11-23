@@ -4,11 +4,10 @@ CFLAGS = -Wall -O2 -Iinclude
 
 # Source files
 SRCS = src/mips32r6_alu.c \
-       src/mips32r6_encoding.c \
+       src/mips32r6_decoding.c \
        src/mips_memory.c \
        src/mips_registers.c \
        src/mips_pipeline.c \
-       src/mips_instructions.c \
        src/mips_program_loading.c \
        src/mips_os.c \
        src/mips_main.c

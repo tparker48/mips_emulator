@@ -1,5 +1,5 @@
 #include "mips_pipeline.h"
-#include "mips32r6_instructions.h"
+#include "mips32r6_decoding.h"
 #include "mips32r6_alu.h"
 #include "mips_memory.h"
 #include "mips_os.h"
@@ -27,7 +27,7 @@ void run_cycle()
 
     write_back();
     memory_access();
-    execute_instruction();
+    execution();
     instruction_decode();
     instruction_fetch();
 }
@@ -38,6 +38,7 @@ bool exited()
 }
 
 void trigger_exit(int code){
+    if (exit_flag) return;
     exit_code = code;
     exit_flag = true;
 }
@@ -49,6 +50,7 @@ int get_exit_code()
 
 void trigger_trap(uint32_t current_pc, uint32_t cause_code)
 {
+    if (trap_pending) return;
     trap_pc = current_pc - 4;
     trap_cause = cause_code;
     trap_pending = true;
@@ -84,7 +86,10 @@ bool pipeline_empty()
 
 void instruction_fetch()
 {
-    ID.noop = false;
+    if (IF.bubble){
+        IF.bubble = false;
+        return;
+    }
 
     if (IF.forwarding.flag)
     {
@@ -93,6 +98,8 @@ void instruction_fetch()
         ID.forwardingIF.register_val = IF.forwarding.register_val;
     }
     IF.forwarding.flag = false;
+
+    ID.noop = false;
 
     if (exit_flag || trap_pending)
     {
@@ -111,11 +118,6 @@ void instruction_fetch()
     }
     else{
         uint32_t instruction = read_mem_word(pc);
-        if (needs_bubble(instruction))
-        {
-            ID.noop = true;
-            return;
-        }
         ID.instruction_word = instruction;
         ID.pc = pc;
     }
@@ -123,32 +125,11 @@ void instruction_fetch()
     pc += 4;
 }
 
-int32_t get_sign_extended_offset(uint32_t x, int bits)
-{
-    uint32_t mask = (1u << bits) - 1;
-    x &= mask;
-
-    uint32_t sign_bit_mask = 1u << (bits - 1);
-    if (x & sign_bit_mask) {
-        uint32_t extend_mask = ~((1u << bits) - 1);
-        x |= extend_mask;
-    }
-
-    return (int32_t)x << 2;
-}
-
-
 void instruction_decode()
-{
-    if (ID.delay_slot || ID.forbidden_slot) {
-        // look for illegal instructions
-    }
-    ID.delay_slot = false;
-    ID.forbidden_slot = false;
-
+{    
     uint32_t instruction = ID.noop ? 0 : ID.instruction_word;
     EXE.noop = ID.noop;
-    EXE.instruction_word = ID.instruction_word;
+    EXE.instruction = decode_instruction();
     EXE.pc = ID.pc;
     EXE.op_code = (instruction >> 26) & 0b111111;
     EXE.rs_id = (instruction >> 21) & 0b11111;
@@ -175,9 +156,26 @@ void instruction_decode()
     apply_forwarding(&ID.forwardingIF);
     apply_forwarding(&ID.forwardingEXE);
     apply_forwarding(&ID.forwardingMEM);
+
+    // Bubble insertion
+    if (needs_bubble())
+    {
+        IF.bubble = true;
+        EXE.noop = true;
+    }
+
+    // Forbidden / Delay slot CTI check
+    if (ID.delay_slot || ID.forbidden_slot) {
+        if (is_cti(instruction)){
+            trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
+            EXE.noop = true;
+        }
+        ID.delay_slot = false;
+        ID.forbidden_slot = false;
+    }
 }
 
-void execute_instruction()
+void execution()
 {
     if (EXE.noop){
         MEM.noop = true;
@@ -214,6 +212,7 @@ void memory_access()
             case STORE_WORD: store_word(); break;
             case STORE_HALF: store_halfword(); break;
             case STORE_BYTE: store_byte(); break;
+            default:
         }
     }
     else if (MEM.read_mem)
@@ -227,6 +226,7 @@ void memory_access()
             case LOAD_HALF_UNSIGNED: load_halfword_unsigned(); break;
             case LOAD_BYTE:  load_byte(); break;
             case LOAD_BYTE_UNSIGNED: load_byte_unsigned(); break;
+            default:
         }
     }
     else if (MEM.write_reg)
@@ -289,7 +289,7 @@ void mem_forward(){
     }
 }
 
-bool needs_bubble(uint32_t instruction)
+bool needs_bubble()
 {
     // RAW dependency check (Read-After-Write):
 
@@ -303,11 +303,11 @@ bool needs_bubble(uint32_t instruction)
     // ..  0x4  noop  x0   ..
     //      ^-forward--<
 
-
-    // TODO move this to ID and revise logic
-    // if MEM.write_reg
-        // if decoded instruction rs or rd == register_to_write
-            // true
+    if (MEM.write_reg){
+        if (EXE.rs_id == MEM.register_to_write || EXE.rt_id == MEM.register_to_write) {
+            return true;
+        }
+    }
     return false;
 }
 

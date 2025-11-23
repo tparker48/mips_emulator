@@ -1,40 +1,116 @@
-#pragma once
-
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "mips_memory.h"
+
 void execute_instruction();
 
-void execute_special();
-void execute_regimm();
-void execute_special3();
-void execute_pcrel();
-void execute_bshfl();
-
-void execute_pop06();
-void execute_pop07();
-void execute_pop10();
-void execute_pop26();
-void execute_pop27();
-void execute_pop30();
-void execute_pop66();
-void execute_pop76();
-void sop30();
-void sop31();
-void sop32();
-void sop33();
-void execute_srl();
-void execute_srlv();
-
-// Bad encodings
-void reserved_B();
-void reserved_star();
-void reserved_no_module();
-void removed_r6();
-void deprecated();
-void execute_cop0();
-void execute_cop1();
-void execute_cop2();
+void add();
+void addiu();
+void addiupc();
+void addu();
+void align();
+void aluipc();
+void and();
+void andi();
+void aui();
+void auipc();
+void balc();
+void bc();
+void beq();
+void bgez();
+void beqc();
+void bnec();
+void beqzc();
+void bnezc();
+void bgtz();
+void bitswap();
+void blez();
+void bltz();
+void bne();
+void bovc();
+void bnvc();
+void break_();
+void clo();
+void clz();
+void div_();
+void mod();
+void dahi();
+void dati();
+void divu();
+void modu();
+void ehb();
+void ext();
+void ins();
+void j();
+void jal();
+void jalr();
+void jialc();
+void jic();
+void lb();
+void lbu();
+void ldpc();
+void lh();
+void lhu();
+void ll();
+void lsa();
+void lw();
+void lwpc();
+void lwupc();
+void mul();
+void muh();
+void mulu();
+void muhu();
+void nor();
+void or();
+void ori();
+void pause();
+void pref();
+void rotr();
+void rotrv();
+void sb();
+void sc();
+void sdbbp();
+void seb();
+void seh();
+void seleqz();
+void selnez();
+void sh();
+void sigrie();
+void sll(); 
+void sllv();
+void slt();
+void slti();
+void sltiu();
+void sltu();
+void sra();
+void srav();
+void srl(); 
+void srlv();
+void sub();
+void subu();
+void sw();
+void sync();
+void synci();
+void syscall();
+void teq();
+void tge();
+void tgeu();
+void tlt();
+void tltu();
+void tne();
+void wsbh();
+void xor();
+void xori();
 
 // Helpers
-bool reads_mem(uint8_t op_code);
+void write_register(uint8_t reg_to_write, uint32_t out);
+
+void prepare_memory_read(enum MemoryOperation op, uint32_t addr, uint8_t destination_register);
+void prepare_memory_write(enum MemoryOperation op, uint32_t addr, uint32_t value);
+
+void legacy_branch(bool cond, uint32_t addr);
+void compact_branch(bool cond, uint32_t addr);
+void unconditional_branch(uint32_t addr);
+void legacy_jump(uint32_t addr);
+void compact_jump(uint32_t addr);

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "mips_memory.h"
+#include "mips32r6_decoding.h"
 
 // For Forwarding Registers
 struct Forwarding
@@ -17,6 +18,7 @@ struct Forwarding
 // Pipeline Structs
 struct InstructionFetch
 {
+    bool bubble;
     struct Forwarding forwarding;
 };
 
@@ -36,7 +38,7 @@ struct InstructionDecode
 struct Execution
 {
     bool noop;
-    uint32_t instruction_word;
+    enum Instruction instruction;
     uint32_t pc;
     uint8_t op_code;
     uint8_t shamt, funct;
@@ -98,12 +100,12 @@ bool pipeline_empty();
 // Pipeline steps
 void instruction_fetch();
 void instruction_decode();
-void execute_instruction();
+void execution();
 void memory_access();
 void write_back();
 
 // Hazard Dection & Control
 void exe_forward();
 void mem_forward();
-bool needs_bubble(uint32_t instruction);
+bool needs_bubble();
 void apply_forwarding(struct Forwarding*);

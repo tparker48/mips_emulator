@@ -1,5 +1,4 @@
 #include "mips_os.h"
-#include "mips_instructions.h"
 #include "mips_registers.h"
 #include "mips_memory.h"
 #include "mips_pipeline.h"
