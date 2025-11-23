@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "mips_alu.h"
+#include "mips_registers.h"
 #include "mips_memory.h"
 #include "mips_pipeline.h"
 #include "mips_program_loading.h"

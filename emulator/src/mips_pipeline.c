@@ -1,8 +1,9 @@
 #include "mips_pipeline.h"
-#include "mips_alu.h"
+#include "mips32r6_instructions.h"
+#include "mips32r6_alu.h"
 #include "mips_memory.h"
-#include "mips_instructions.h"
 #include "mips_os.h"
+#include "mips_registers.h"
 
 struct InstructionFetch IF;
 struct InstructionDecode ID;
@@ -113,29 +114,42 @@ void instruction_fetch()
         if (needs_bubble(instruction))
         {
             ID.noop = true;
-            ID.instruction_word = 0;
             return;
         }
         ID.instruction_word = instruction;
+        ID.pc = pc;
     }
 
     pc += 4;
 }
 
-int32_t sign_extend_26(uint32_t x)
+int32_t get_sign_extended_offset(uint32_t x, int bits)
 {
-    x &= 0x03FFFFFF;    
-    if (x & 0x02000000) 
-        x |= 0xFC000000;
-    return (int32_t)x;
+    uint32_t mask = (1u << bits) - 1;
+    x &= mask;
+
+    uint32_t sign_bit_mask = 1u << (bits - 1);
+    if (x & sign_bit_mask) {
+        uint32_t extend_mask = ~((1u << bits) - 1);
+        x |= extend_mask;
+    }
+
+    return (int32_t)x << 2;
 }
+
 
 void instruction_decode()
 {
-    EXE.noop = ID.noop;
+    if (ID.delay_slot || ID.forbidden_slot) {
+        // look for illegal instructions
+    }
+    ID.delay_slot = false;
+    ID.forbidden_slot = false;
 
-    uint32_t instruction = ID.instruction_word;
+    uint32_t instruction = ID.noop ? 0 : ID.instruction_word;
+    EXE.noop = ID.noop;
     EXE.instruction_word = ID.instruction_word;
+    EXE.pc = ID.pc;
     EXE.op_code = (instruction >> 26) & 0b111111;
     EXE.rs_id = (instruction >> 21) & 0b11111;
     EXE.rt_id = (instruction >> 16) & 0b11111;
@@ -151,7 +165,10 @@ void instruction_decode()
     EXE.address = (instruction & 0x03FFFFFF) | (pc & 0xF0000000);
     EXE.msb = (instruction >> 6) & 0b11111;
     EXE.lsb = (instruction >> 11)& 0b11111;
-    EXE.offset = (sign_extend_26(instruction)) << 2;
+    EXE.offset16 = EXE.immediate_se;
+    EXE.offset19 = get_sign_extended_offset(instruction, 19);
+    EXE.offset21 = get_sign_extended_offset(instruction, 21);
+    EXE.offset26 = get_sign_extended_offset(instruction, 26);
     EXE.bp = (instruction >> 6) & 0b11;
     EXE.r = (instruction >> 21) & 0b1;
 
@@ -162,31 +179,17 @@ void instruction_decode()
 
 void execute_instruction()
 {
-    MEM.noop = EXE.noop;
-    MEM.op_code = EXE.op_code;
+    if (EXE.noop){
+        MEM.noop = true;
+        return;
+    }
 
+    MEM.noop = false;
     MEM.write_mem = false;
     MEM.write_reg = false;
     MEM.read_mem = false;
 
-    if (EXE.noop)
-    {
-        return;
-    }
-
-    if (is_r_instruction(EXE.op_code))
-    {
-        execute_r();
-    }
-    else if (is_j_instruction(EXE.op_code))
-    {
-        execute_j();
-    }
-    else if (is_i_instruction(EXE.op_code))
-    {
-        execute_i();
-    }
-
+    execute_instruction();
     exe_forward();
 }
 
@@ -202,27 +205,28 @@ void memory_access()
     WB.write_from_mem = false;
     WB.write_from_alu = false;
 
+    // execute_mem
     if (MEM.write_mem)
     {
         WB.noop = true;
-        switch (MEM.op_code)
+        switch (MEM.operation)
         {
-        case OP_SB: sb(); break;
-        case OP_SH: sh(); break;
-        case OP_SW: sw(); break;
+            case STORE_WORD: store_word(); break;
+            case STORE_HALF: store_halfword(); break;
+            case STORE_BYTE: store_byte(); break;
         }
     }
     else if (MEM.read_mem)
     {
         WB.write_from_mem = true;
         WB.register_to_write = MEM.register_to_write;
-        switch (MEM.op_code)
+        switch (MEM.operation)
         {
-        case OP_LB:  lb(); break;
-        case OP_LH:  lh(); break;
-        case OP_LW:  lw(); break;
-        case OP_LBU: lbu(); break;
-        case OP_LHU: lhu(); break;
+            case LOAD_WORD:  load_word(); break;
+            case LOAD_HALF:  load_halfword(); break;
+            case LOAD_HALF_UNSIGNED: load_halfword_unsigned(); break;
+            case LOAD_BYTE:  load_byte(); break;
+            case LOAD_BYTE_UNSIGNED: load_byte_unsigned(); break;
         }
     }
     else if (MEM.write_reg)
@@ -299,21 +303,11 @@ bool needs_bubble(uint32_t instruction)
     // ..  0x4  noop  x0   ..
     //      ^-forward--<
 
-    uint8_t op_code = (instruction >> 26) & 0b111111;
-    uint8_t rs_id = (instruction >> 21) & 0b11111;
-    uint8_t rt_id = (instruction >> 16) & 0b11111;
 
-    if (reads_mem(EXE.op_code))
-    {
-        if (is_r_instruction(op_code) || is_i_instruction(op_code))
-        {
-            if (rs_id == EXE.rt_id || rt_id == EXE.rt_id)
-            {
-                return true;
-            }
-        }
-    }
-
+    // TODO move this to ID and revise logic
+    // if MEM.write_reg
+        // if decoded instruction rs or rd == register_to_write
+            // true
     return false;
 }
 

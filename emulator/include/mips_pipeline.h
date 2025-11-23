@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "mips_memory.h"
 
 // For Forwarding Registers
 struct Forwarding
@@ -22,7 +23,11 @@ struct InstructionFetch
 struct InstructionDecode
 {
     bool noop;
+    bool squash;
+    bool forbidden_slot;
+    bool delay_slot;
     uint32_t instruction_word;
+    uint32_t pc;
     struct Forwarding forwardingIF;
     struct Forwarding forwardingEXE;
     struct Forwarding forwardingMEM;
@@ -32,6 +37,7 @@ struct Execution
 {
     bool noop;
     uint32_t instruction_word;
+    uint32_t pc;
     uint8_t op_code;
     uint8_t shamt, funct;
     uint32_t rs, rt, rd;
@@ -40,7 +46,10 @@ struct Execution
     int32_t immediate_se;
     uint32_t immediate_sll16;
     uint32_t address;
-    int32_t offset;
+    int32_t offset16;
+    int32_t offset19;
+    int32_t offset21;
+    int32_t offset26;
     uint8_t msb;
     uint8_t lsb;
     uint8_t bp;
@@ -50,7 +59,7 @@ struct Execution
 struct MemoryAccess
 {
     bool noop;
-    uint8_t op_code;
+    enum MemoryOperation operation;
     uint32_t alu_out;
     uint32_t reg_out;
     uint8_t register_to_write;

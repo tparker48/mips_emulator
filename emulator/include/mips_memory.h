@@ -40,13 +40,25 @@ void write_mem_byte(uint32_t addr, uint8_t byte);
 void write_mem_halfword(uint32_t addr, uint16_t v);
 void write_mem_word(uint32_t addr, uint32_t v);
 
+void store_word();
+void store_halfword();
+void store_byte();
+void load_word();
+void load_halfword();
+void load_halfword_unsigned();
+void load_byte();
+void load_byte_unsigned();
+
 uint8_t* access_mem_bytes(uint32_t address, int len);
 
-void sb();
-void sh();
-void sw();
-void lb();
-void lh();
-void lw();
-void lbu();
-void lhu();
+
+enum MemoryOperation {
+    STORE_WORD,   
+    STORE_HALF,   
+    STORE_BYTE,  
+    LOAD_WORD,
+    LOAD_HALF,
+    LOAD_HALF_UNSIGNED, 
+    LOAD_BYTE,
+    LOAD_BYTE_UNSIGNED
+};

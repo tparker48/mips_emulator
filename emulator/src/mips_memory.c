@@ -79,35 +79,37 @@ void write_mem_word(uint32_t addr, uint32_t v) {
     write_mem_byte(addr + 3,  v        & 0xFF);
 }
 
-void sb()
-{
-    write_mem_byte(MEM.alu_out, MEM.reg_out);
-}
-void sh()
-{
-    write_mem_halfword(MEM.alu_out, MEM.reg_out);
-}
-void sw()
+void store_word()
 {
     write_mem_word(MEM.alu_out, MEM.reg_out);
 }
-void lb()
+void store_halfword()
 {
-    WB.mem_out = (int8_t)read_mem_byte(MEM.alu_out);
+    write_mem_halfword(MEM.alu_out, MEM.reg_out);
 }
-void lh()
+void store_byte()
 {
-    WB.mem_out = (int16_t)read_mem_halfword(MEM.alu_out);
+    write_mem_byte(MEM.alu_out, MEM.reg_out);
 }
-void lw()
+
+void load_word()
 {
     WB.mem_out = read_mem_word(MEM.alu_out);
 }
-void lbu()
+void load_halfword()
 {
-    WB.mem_out = read_mem_byte(MEM.alu_out);
+    WB.mem_out = (int16_t)read_mem_halfword(MEM.alu_out);
 }
-void lhu()
+void load_halfword_unsigned()
 {
     WB.mem_out = read_mem_halfword(MEM.alu_out);
 }
+void load_byte()
+{
+    WB.mem_out = (int8_t)read_mem_byte(MEM.alu_out);
+}
+void load_byte_unsigned()
+{
+    WB.mem_out = read_mem_byte(MEM.alu_out);
+}
+

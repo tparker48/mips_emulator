@@ -3,7 +3,8 @@ CC = gcc
 CFLAGS = -Wall -O2 -Iinclude
 
 # Source files
-SRCS = src/mips_alu.c \
+SRCS = src/mips32r6_alu.c \
+       src/mips32r6_encoding.c \
        src/mips_memory.c \
        src/mips_registers.c \
        src/mips_pipeline.c \

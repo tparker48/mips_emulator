@@ -1,615 +1,458 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <limits.h>
-
-#include "mips_alu.h"
-#include "mips_memory.h"
-#include "mips_instructions.h"
+#include "mips32r6_alu.h"
+#include "mips32r6_instructions.h"
+#include "mips_pipeline.h"
 #include "mips_os.h"
+#include "mips_registers.h"
 
-void add()
-{
-    int64_t t1 = (int64_t)(int32_t)EXE.rs;
-    int64_t t2 = (int64_t)(int32_t)EXE.rt;
-    int64_t result = t1 + t2;
+void execute_instruction(){
+    switch(EXE.op_code){
+    case 0b000000: execute_special();
+    case 0b000001: execute_regimm(); break;
+    case 0b000010: j(); break;
+    case 0b000011: jal(); break;
+    case 0b000100: beq(); break;
+    case 0b000101: bne(); break;
+    case 0b000110: execute_pop06(); break;
+    case 0b000111: execute_pop07(); break;
 
-    if (result > INT32_MAX || result < INT32_MIN)
+    case 0b001000: execute_pop10(); break;
+    case 0b001001: addiu(); break;
+    case 0b001010: slti(); break;
+    case 0b001011: sltiu(); break;
+    case 0b001100: andi(); break;
+    case 0b001101: ori(); break;
+    case 0b001110: xori(); break;
+    case 0b001111: aui(); break;
+
+    case 0b010000: execute_cop0(); break;
+    case 0b010001: execute_cop1(); break;
+    case 0b010010: execute_cop2(); break;
+    case 0b010011: removed_r6(); break;
+    case 0b010100: removed_r6(); break;
+    case 0b010101: removed_r6(); break;
+    case 0b010110: execute_pop26(); break;
+    case 0b010111: execute_pop27(); break;
+
+    case 0b011000: execute_pop30(); break;
+    case 0b011001: reserved_B(); break;
+    case 0b011010: reserved_B(); break;
+    case 0b011011: reserved_B(); break;
+    case 0b011100: reserved_star(); break;
+    case 0b011101: reserved_no_module(); break;
+    case 0b011110: reserved_no_module(); break;
+    case 0b011111: execute_special3(); break;
+
+    case 0b100000: lb(); break;
+    case 0b100001: lh(); break;
+    case 0b100010: removed_r6(); break;
+    case 0b100011: lw(); break;
+    case 0b100100: lbu(); break;
+    case 0b100101: lhu(); break;
+    case 0b100110: removed_r6(); break;
+    case 0b100111: reserved_B(); break;
+
+    case 0b101000: sb(); break;
+    case 0b101001: sh(); break;
+    case 0b101010: removed_r6(); break;
+    case 0b101011: sw(); break;
+    case 0b101100: reserved_B(); break;
+    case 0b101101: reserved_B(); break;
+    case 0b101110: removed_r6(); break;
+    case 0b101111: removed_r6(); break;
+
+    case 0b110000: removed_r6(); break;
+    case 0b110001: reserved_no_module(); break;
+    case 0b110010: bc(); break;
+    case 0b110011: removed_r6(); break;
+    case 0b110100: reserved_B(); break;
+    case 0b110101: reserved_no_module(); break;
+    case 0b110110: execute_pop66(); break;
+    case 0b110111: reserved_B(); break;
+
+    case 0b111000: removed_r6(); break;
+    case 0b111001: reserved_no_module(); break;
+    case 0b111010: balc(); break;
+    case 0b111011: execute_pcrel(); break;
+    case 0b111100: reserved_B(); break;
+    case 0b111101: reserved_no_module(); break;
+    case 0b111110: execute_pop76(); break;
+    case 0b111111: reserved_B(); break;
+    }
+}
+
+void execute_special(){
+    switch(EXE.funct){
+    case 0b000000: sll(); break;
+    case 0b001000: removed_r6(); break;
+    case 0b010000: clz(); break;
+    case 0b011000: sop30(); break;
+    case 0b100000: add(); break;
+    case 0b101000: reserved_star(); break;
+    case 0b110000: tge(); break;
+    case 0b111000: reserved_B(); break;
+    
+    case 0b000001: removed_r6(); break;
+    case 0b001001: jalr(); break;
+    case 0b010001: clo(); break;
+    case 0b011001: sop31(); break;
+    case 0b100001: addu(); break;
+    case 0b101001: reserved_star(); break;
+    case 0b110001: tgeu(); break;
+    case 0b111001: reserved_star(); break;
+    
+    case 0b000010: execute_srl(); break;
+    case 0b001010: removed_r6(); break;
+    case 0b010010: removed_r6(); break;
+    case 0b011010: sop32(); break;
+    case 0b100010: sub(); break;
+    case 0b101010: slt(); break;
+    case 0b110010: tlt(); break;
+    case 0b111010: reserved_B(); break;
+    
+    case 0b000011: sra(); break;
+    case 0b001011: removed_r6(); break;
+    case 0b010011: removed_r6(); break;
+    case 0b011011: sop33(); break;
+    case 0b100011: subu(); break;
+    case 0b101011: sltu(); break;
+    case 0b110011: tltu(); break;
+    case 0b111011: reserved_B(); break;
+    
+    case 0b000100: sllv(); break;
+    case 0b001100: syscall(); break;
+    case 0b010100: reserved_B(); break;
+    case 0b011100: reserved_B(); break;
+    case 0b100100: and(); break;
+    case 0b101100: reserved_B(); break;
+    case 0b110100: teq(); break;
+    case 0b111100: reserved_B(); break;
+    
+    case 0b000101: lsa(); break;
+    case 0b001101: break_(); break;
+    case 0b010101: reserved_B(); break;
+    case 0b011101: reserved_B();break;
+    case 0b100101: or(); break;
+    case 0b101101: reserved_B(); break;
+    case 0b110101: seleqz(); break;
+    case 0b111101: reserved_star(); break;
+    
+    case 0b000110: execute_srlv(); break;
+    case 0b001110: sdbbp(); break;
+    case 0b010110: reserved_B(); break;
+    case 0b011110: reserved_B(); break;
+    case 0b100110: xor(); break;
+    case 0b101110: reserved_B(); break;
+    case 0b110110: tne(); break;
+    case 0b111110: reserved_B(); break;
+    
+    case 0b000111: srav(); break;
+    case 0b001111: sync(); break;
+    case 0b010111: reserved_B(); break;
+    case 0b011111: reserved_B(); break;
+    case 0b100111: nor(); break;
+    case 0b101111: reserved_B(); break;
+    case 0b110111: selnez(); break;
+    case 0b111111: reserved_B(); break;
+    }
+}
+
+void execute_regimm(){
+    switch (EXE.rt){
+    case 0b00000: bltz(); break;
+    case 0b00001: bgez(); break;
+    case 0b00010: removed_r6(); break;
+    case 0b00011: removed_r6(); break;
+    case 0b00100: reserved_star(); break;
+    case 0b00101: reserved_star(); break;
+    case 0b00110: dahi(); break;
+    case 0b00111: reserved_no_module(); break;
+
+    case 0b01000: removed_r6(); break;
+    case 0b01001: removed_r6(); break;
+    case 0b01010: removed_r6(); break;
+    case 0b01011: removed_r6(); break;
+    case 0b01100: removed_r6(); break;
+    case 0b01101: reserved_star(); break;
+    case 0b01110: removed_r6(); break;
+    case 0b01111: reserved_star(); break;
+
+    case 0b10000: deprecated(); break;
+    case 0b10001: deprecated(); break;
+    case 0b10010: removed_r6(); break;
+    case 0b10011: removed_r6(); break;
+    case 0b10100: reserved_star(); break;
+    case 0b10101: reserved_star(); break;
+    case 0b10110: reserved_star(); break;
+    case 0b10111: sigrie(); break;
+
+    case 0b11000: reserved_star(); break;
+    case 0b11001: reserved_star(); break;
+    case 0b11010: reserved_star(); break;
+    case 0b11011: reserved_star(); break;
+    case 0b11100: reserved_no_module(); break;
+    case 0b11101: reserved_no_module(); break;
+    case 0b11110: dati(); break;
+    case 0b11111: synci(); break;
+    }
+}
+
+void execute_special3() {
+    switch(EXE.funct) {
+    case 0b000000: ext(); break;
+    case 0b000001: reserved_B(); break;
+    case 0b000010: reserved_B(); break;
+    case 0b000011: reserved_B(); break;
+    case 0b000100: ins(); break;
+    case 0b000101: reserved_B(); break;
+    case 0b000110: reserved_B(); break;
+    case 0b000111: reserved_B(); break;
+
+    case 0b001000: reserved_no_module(); break;
+    case 0b001001: reserved_no_module(); break;
+    case 0b001010: reserved_no_module(); break;
+    case 0b001011: reserved_star(); break;
+    case 0b001100: reserved_no_module(); break;
+    case 0b001101: reserved_no_module(); break;
+    case 0b001110: reserved_star(); break;
+    case 0b001111: reserved_star(); break;
+
+    case 0b010000: reserved_no_module(); break;
+    case 0b010001: reserved_no_module(); break;
+    case 0b010010: reserved_no_module(); break;
+    case 0b010011: reserved_no_module(); break;
+    case 0b010100: reserved_no_module(); break;
+    case 0b010101: reserved_no_module(); break;
+    case 0b010110: reserved_no_module(); break;
+    case 0b010111: reserved_no_module(); break;
+
+    case 0b011000: reserved_no_module(); break;
+    case 0b011001: removed_r6(); break;
+    case 0b011010: removed_r6(); break;
+    case 0b011011: reserved_no_module(); break;
+    case 0b011100: reserved_no_module(); break;
+    case 0b011101: reserved_no_module(); break;
+    case 0b011110: reserved_no_module(); break;
+    case 0b011111: reserved_no_module(); break;
+
+    case 0b100000: execute_bshfl(); break;
+    case 0b100001: removed_r6(); break;
+    case 0b100010: removed_r6(); break;
+    case 0b100011: reserved_no_module(); break;
+    case 0b100100: reserved_B(); break;
+    case 0b100101: reserved_no_module(); break;
+    case 0b100110: reserved_no_module(); break;
+    case 0b100111: reserved_B(); break;
+
+    case 0b101000: reserved_no_module(); break;
+    case 0b101001: reserved_no_module(); break;
+    case 0b101010: reserved_star(); break;
+    case 0b101011: reserved_star(); break;
+    case 0b101100: reserved_no_module(); break;
+    case 0b101101: reserved_no_module(); break;
+    case 0b101110: reserved_no_module(); break;
+    case 0b101111: reserved_no_module(); break;
+
+    case 0b110000: reserved_no_module(); break;
+    case 0b110001: reserved_no_module(); break;
+    case 0b110010: reserved_star(); break;
+    case 0b110011: reserved_star(); break;
+    case 0b110100: reserved_no_module(); break;
+    case 0b110101: pref(); break;
+    case 0b110110: ll(); break;
+    case 0b110111: reserved_B(); break;
+
+    case 0b111000: reserved_no_module(); break;
+    case 0b111001: reserved_star(); break;
+    case 0b111010: reserved_star(); break;
+    case 0b111011: reserved_no_module(); break;
+    case 0b111100: reserved_no_module(); break;
+    case 0b111101: reserved_star(); break;
+    case 0b111110: reserved_star(); break;
+    case 0b111111: reserved_star(); break;
+    }
+}
+
+void execute_pcrel(){
+    switch (EXE.op_code)
     {
-        trigger_trap(pc, EXCEPT_OVERFLOW);
-        return;
-    }
-    write_register(EXE.rd_id, (int32_t)result);
-}
-void addiu()
-{
-    uint32_t result = (uint32_t)EXE.rs + (uint32_t)EXE.immediate_se;
-    write_register(EXE.rt_id, result);
-}
-void addiupc()
-{
-    write_register(EXE.rs_id, pc + EXE.immediate_se);
-}
-void addu()
-{
-    uint32_t result = EXE.rs + EXE.rt;
-    write_register(EXE.rd_id, result);
-}
-void align()
-{
-    uint32_t offset = 8 * EXE.bp;
-    write_register(EXE.rd_id, (
-        (EXE.rt << offset) | (EXE.rs >> (32-offset))
-    ));
-}
-void aluipc()
-{
-    write_register(EXE.rs_id, ~0x0FFFF & (pc + EXE.immediate_sll16));
-}
-void and()
-{
-    write_register(EXE.rd_id, EXE.rs & EXE.rt);
-}
-void andi()
-{
-   write_register(EXE.rt_id, EXE.rs & EXE.immediate_ze ); 
-}
-void aui()
-{
-    write_register(EXE.rt_id, EXE.rs + EXE.immediate_sll16);
-}
-void auipc()
-{
-    write_register(EXE.rs_id, pc + EXE.immediate_sll16);
-}
-void balc()
-{
-    // TODO
-    // no delay slot
-    // no forbidden slot
-    write_register(ra, pc);
-    pc += EXE.offset;
-}
-void bc()
-{
-    // TODO
-    // no delay slot
-    // no forbidden slot
-    pc += EXE.offset;
-}
-void beq()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    if (EXE.rs == EXE.rt){
-        pc += branch_addr;
+    case 0b00000:
+    case 0b00001:
+    case 0b00010:
+    case 0b00011:
+    case 0b00100:
+    case 0b00101:
+    case 0b00110:
+    case 0b00111: addiupc(); break;
+    case 0b01000:
+    case 0b01001:
+    case 0b01010:
+    case 0b01011:
+    case 0b01100:
+    case 0b01101:
+    case 0b01110:
+    case 0b01111: lwpc(); break;
+    case 0b10000:
+    case 0b10001:
+    case 0b10010:
+    case 0b10011:
+    case 0b10100:
+    case 0b10101:
+    case 0b10110:
+    case 0b10111: lwupc(); break;
+    case 0b11000:
+    case 0b11001:
+    case 0b11010:
+    case 0b11011: ldpc(); break;
+    case 0b11110: auipc(); break;
+    case 0b11111: aluipc(); break;
     }
 }
-void bgez()
-{
-    uint32_t branch_addr = get_branch_addr();
-    if ((int32_t)EXE.rs >= 0){
-        pc += branch_addr;
-    }
-}
-void beqc()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    if (EXE.rs == EXE.rt){
-        pc += branch_addr;
-    }
-}
-void bnec()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    if (EXE.rs != EXE.rt){
-        pc += branch_addr;
-    }
-}
-void beqzc()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    if (EXE.rs == 0){
-        pc += branch_addr;
-    }
-}
-void bnezc()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    if (EXE.rs != 0){
-        pc += branch_addr;
-    }
-}
-void bgtz()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr(); 
-    if ((int32_t)EXE.rs > 0){
-        pc += branch_addr;
-    }
-}
-void bitswap()
-{
-    uint32_t swapped_output = 0;
-    for (int i = 0; i < 4; i++){
-        uint8_t byte = (EXE.rt >> i*8) & 0xFF;
-        byte = ((byte & 0xF0) >> 4) | ((byte & 0x0F) << 4);
-        byte = ((byte & 0xCC) >> 2) | ((byte & 0x33) << 2);
-        byte = ((byte & 0xAA) >> 1) | ((byte & 0x55) << 1);
-        swapped_output |= (byte << i*8);
-    }
-    write_register(EXE.rd_id, swapped_output);
-}
-void blez()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    if ((int32_t)EXE.rs <= 0){
-        pc += branch_addr;
-    }
-}
-void bltz()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    if ((int32_t)EXE.rs < 0){
-        pc += branch_addr;
-    }
-}
-void bne()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    if (EXE.rs != EXE.rt){
-        pc += branch_addr;
-    }
-}
-void bovc()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    int64_t t1 = (int64_t)(int32_t)EXE.rs;
-    int64_t t2 = (int64_t)(int32_t)EXE.rt;
-    int64_t result = t1 + t2;
 
-    if (result > INT32_MAX || result < INT32_MIN)
-    {
-        pc += branch_addr;
+void execute_bshfl() {
+    switch(EXE.shamt){
+    case 0b00000: bitswap(); break;
+    case 0b00001: reserved_star(); break;
+    case 0b00010: wsbh(); break;
+    case 0b00011: reserved_star(); break;
+    case 0b00100: reserved_star(); break;
+    case 0b00101: reserved_star(); break;
+    case 0b00110: reserved_star(); break;
+    case 0b00111: reserved_star(); break;
 
+    case 0b01000:
+    case 0b01001:
+    case 0b01010:
+    case 0b01011: align(); break;
+    case 0b01100: reserved_star(); break;
+    case 0b01101: reserved_star(); break;
+    case 0b01110: reserved_star(); break;
+    case 0b01111: reserved_star(); break;
+
+    case 0b10000: seb(); break;
+    case 0b10001: reserved_star(); break;
+    case 0b10010: reserved_star(); break;
+    case 0b10011: reserved_star(); break;
+    case 0b10100: reserved_star(); break;
+    case 0b10101: reserved_star(); break;
+    case 0b10110: reserved_star(); break;
+    case 0b10111: reserved_star(); break;
+
+    case 0b11000: seh(); break;
+    case 0b11001: reserved_star(); break;
+    case 0b11010: reserved_star(); break;
+    case 0b11011: reserved_star(); break;
+    case 0b11100: reserved_star(); break;
+    case 0b11101: reserved_star(); break;
+    case 0b11110: reserved_star(); break;
+    case 0b11111: reserved_star(); break;
     }
 }
-void bnvc()
-{
-    // TODO
-    // check forbidden slots or someting
-    uint32_t branch_addr = get_branch_addr();
-    int64_t t1 = (int64_t)(int32_t)EXE.rs;
-    int64_t t2 = (int64_t)(int32_t)EXE.rt;
-    int64_t result = t1 + t2;
 
-    if ( !(result > INT32_MAX || result < INT32_MIN) )
-    {
-        pc += branch_addr;
+void execute_pop06() {
+    reserved_no_module();
+}
+void execute_pop07() {
+    reserved_no_module();
+}
+void execute_pop10() {
+    if (EXE.rs < EXE.rt && EXE.rs != 0 && EXE.rt != 0) beqc();
+    else if (EXE.rs >= EXE.rt) bovc();
+    else reserved_no_module();
+}
+void execute_pop26() {
+    reserved_no_module();
+}
+void execute_pop27() {
+    reserved_no_module();
+}
+void execute_pop30() {
+    if (EXE.rs < EXE.rt && EXE.rs != 0 && EXE.rt != 0) bnec();
+    else if (EXE.rs >= EXE.rt) bnvc();
+    else reserved_no_module();
+}
+void execute_pop66() {
+    if (EXE.rs == 0) jic();
+    else reserved_no_module();
+}
+void execute_pop76() {
+    if (EXE.rs == 0) jialc();
+    else reserved_no_module(); 
+}
+
+void sop30(){
+    switch(EXE.shamt){
+    case 0b00010: mul(); break;
+    case 0b00011: muh(); break;
+    default: reserved_no_module();
     }
 }
-void break_()
-{
-    trigger_trap(pc, EXCEPT_BREAKPOINT);
-}
-void clo()
-{
-    uint32_t rs = EXE.rs;
-    uint32_t leading_ones = 0;
-    for (int i = 0; i < 32; i++){
-        uint8_t bit = (rs >> (31-i)) & 1;
-        if (bit == 1) {
-            leading_ones++;
-        }
-        else {
-            break;
-        }
+void sop31(){
+    switch(EXE.shamt){
+    case 0b00010: mulu(); break;
+    case 0b00011: muhu(); break;
+    default: reserved_no_module();
     }
-    write_register(EXE.rd_id, leading_ones);
 }
-void clz()
-{
-    uint32_t rs = EXE.rs;
-    uint32_t leading_zeros = 0;
-    for (int i = 0; i < 32; i++){
-        uint8_t bit = (rs >> (31-i)) & 1;
-        if (bit == 0) {
-            leading_zeros++;
-        }
-        else {
-            break;
-        }
+void sop32(){
+    switch(EXE.shamt){
+    case 0b00010: div_(); break;
+    case 0b00011: mod(); break;
+    default: reserved_no_module();
     }
-    write_register(EXE.rd_id, leading_zeros);
 }
-void div_()
-{
-    int32_t t1 = (int32_t)EXE.rs;
-    int32_t t2 = (int32_t)EXE.rt;
-
-    if (t2 == 0)
-    {
-        // divide by zero exception
-        return;
+void sop33(){
+    switch(EXE.shamt){
+    case 0b00010: divu(); break;
+    case 0b00011: modu(); break;
+    default: reserved_no_module();
     }
-
-    write_register(EXE.rd_id, t1/t2);
 }
-void mod()
-{
-    int32_t t1 = (int32_t)EXE.rs;
-    int32_t t2 = (int32_t)EXE.rt;
-    write_register(EXE.rd_id, t1%t2);
-}
-void divu()
-{
-    // lo = rs/rt, hi = rs%rt
-    uint32_t t1 = (uint32_t)EXE.rs;
-    uint32_t t2 = (uint32_t)EXE.rt;
 
-    if (t2 == 0){
-        // divide by zero exception
-        return; 
+void execute_srl() {
+    switch(EXE.r){
+        case 0: srl(); break;
+        case 1: rotr(); break;
     }
-    write_register(EXE.rd_id, t1/t2);
 }
-void modu()
-{
-    // lo = rs/rt, hi = rs%rt
-    uint32_t t1 = (uint32_t)EXE.rs;
-    uint32_t t2 = (uint32_t)EXE.rt;
-    write_register(EXE.rd_id, t1%t2);
-}
-void ehb()
-{
-    // noop
-}
-void ext()
-{
-    uint8_t size = EXE.msb+1;
-    uint8_t pos = EXE.lsb;
-    uint32_t mask = 0xFFFFFFFF;
-    if (size < 32){
-        mask = ~((0xFFFFFFFF) << size);
+void execute_srlv() {
+    switch(EXE.r){
+        case 0: srlv(); break;
+        case 1: rotrv(); break;
     }
-    write_register(EXE.rd_id, (EXE.rs >> (pos)) & mask);
 }
-void ins()
-{
-    uint8_t pos = EXE.lsb;
-    uint8_t size = EXE.msb-pos+1;
-    uint32_t mask = 0xFFFFFFFF;
-    if (size < 32){
-        mask = ~((0xFFFFFFFF) << size);
-    }
-    uint32_t extracted = EXE.rs & mask;
-    uint32_t result = (EXE.rt & ~(mask << pos)) | (extracted << pos);
-    write_register(EXE.rt_id, result);
-}
-void j()
-{
-    // TODO Delay / Forbidden stuff
-    uint32_t addr = EXE.address << 2;
-    pc = addr;
-}
-void jal()
-{
-    // TODO Delay / Forbidden stuff
-    write_register(ra, pc);
-    uint32_t addr = EXE.address << 2;
-    pc = addr;
-}
-void jalr()
-{
-    // TODO Delay / Forbidden stuff
-    write_register(EXE.rd_id, pc);
-    pc = EXE.rs;
-}
-void jialc()
-{
-    // TODO Delay / Forbidden stuff
-    write_register(ra, pc);
-    pc = EXE.immediate_se + EXE.rt;
-}
-void jic()
-{
-    // TODO Delay / Forbidden stuff
-    pc = EXE.immediate_se + EXE.rt;
-}
-void lb()
-{
-    // TODO MEM
-}
-void lbu()
-{
-    // TODO MEM
 
-}
-void lh()
-{
-    // TODO MEM
-
-}
-void lhu()
-{
-    // TODO MEM
-
-}
-void ll()
-{
-    // TODO MEM
-    // TODO atomic?
-}
-void lsa()
-{
-    write_register(EXE.rd_id, (EXE.rs << (EXE.bp+1)) + EXE.rt);
-}
-void lw()
-{
-    // TODO MEM
-
-}
-void lwpc()
-{
-    // TODO MEM
-}
-void mul()
-{
-    int64_t t1 = (int64_t)(int32_t)EXE.rs;
-    int64_t t2 = (int64_t)(int32_t)EXE.rt;
-    int64_t result = t1*t2;
-    write_register(EXE.rd_id, (uint32_t)result);
-}
-void muh()
-{
-    int64_t t1 = (int64_t)(int32_t)EXE.rs;
-    int64_t t2 = (int64_t)(int32_t)EXE.rt;
-    int64_t result = t1*t2;
-    write_register(EXE.rd_id, (uint32_t)(result>>32));
-}
-void mulu()
-{
-    uint64_t t1 = (uint64_t)EXE.rs;
-    uint64_t t2 = (uint64_t)EXE.rt;
-    uint64_t result = t1*t2;
-    write_register(EXE.rd_id, (uint32_t)result);
-}
-void muhu()
-{
-    uint64_t t1 = (uint64_t)EXE.rs;
-    uint64_t t2 = (uint64_t)EXE.rt;
-    uint64_t result = t1*t2;
-    write_register(EXE.rd_id, (uint32_t)(result>>32));
-}
-void nor()
-{
-    write_register(EXE.rd_id, ~(EXE.rs | EXE.rt));
-}
-void or()
-{
-    write_register(EXE.rd_id, EXE.rs | EXE.rt);
-}
-void ori()
-{
-    write_register(EXE.rt_id, EXE.rs | EXE.immediate_ze ); 
-}
-void pause()
-{
-    // nop
-}
-void pref()
-{
-    // nop
-}
-void rotr()
-{
-    uint32_t result = (EXE.rt >> EXE.shamt | EXE.rt << (32-EXE.shamt));
-    write_register(EXE.rd_id, result);
-}
-void rotrv()
-{
-    uint8_t shamt = EXE.rs & 0b11111;
-    uint32_t result = (EXE.rt >> shamt | EXE.rt << (32-shamt));
-    write_register(EXE.rd_id, result);
-}
-void sb()
-{
-    // TODO MEM
-}
-void sc()
-{
-    // TODO MEM
-    // TODO atomic?
-}
-void sdbbp()
-{
-    trigger_trap(pc, EXCEPT_BREAKPOINT);
-}
-void seb()
-{
-    write_register(EXE.rd_id, (uint32_t)(int32_t)(int8_t)EXE.rt);
-}
-void seh()
-{
-    write_register(EXE.rd_id, (uint32_t)(int32_t)(int16_t)EXE.rt);
-}
-void seleqz()
-{
-    write_register(EXE.rd_id, EXE.rt != 0 ? 0 : EXE.rs);
-}
-void selnez()
-{
-    write_register(EXE.rd_id, EXE.rt == 0 ? 0 : EXE.rs);
-}
-void sh()
-{
-    // TODO MEM
-}
-void sigrie()
-{
+void reserved_B(){
     trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
 }
-void sll() 
-{
-    write_register(EXE.rd_id, EXE.rt << EXE.shamt);
+void reserved_star(){
+    trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
 }
-void sllv()
-{
-    if (EXE.rs < 32){
-        write_register(EXE.rd_id, EXE.rt << EXE.rs);
-    }
-    else{
-        write_register(EXE.rd_id, 0);
-    }
-}
-void slt()
-{
-    write_register(EXE.rd_id, ((int32_t)EXE.rs < (int32_t)EXE.rt ? 1: 0));
-}
-void slti()
-{
-    write_register(EXE.rt_id, ((int32_t)EXE.rs < EXE.immediate_se ? 1: 0));
-}
-void sltiu()
-{
-    write_register(EXE.rt_id, (EXE.rs < (uint32_t)EXE.immediate_se ? 1: 0));
-}
-void sltu()
-{
-    write_register(EXE.rd_id, (EXE.rs < EXE.rt ? 1: 0));
-}
-void sra()
-{
-    int32_t val = (int32_t)EXE.rt;
-    uint32_t result = ((uint32_t)val) >> EXE.shamt;
+void reserved_no_module() {
+    trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
 
-    if (val < 0){
-        result |= ~((~0u) >> EXE.shamt);
-    }
+}
+void removed_r6() {
+    trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
+}
+void deprecated() {
+    trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
 
-    write_register(EXE.rd_id, result);
 }
-void srav()
-{
-    int32_t val = (int32_t)EXE.rt;
-    uint8_t shamt = EXE.rs & 0b11111;
-    uint32_t result = ((uint32_t)val) >> shamt;
+void execute_cop0() {
+    trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
 
-    if (val < 0){
-        result |= ~((0xFFFFFFFFu) >> shamt);
-    }
+}
+void execute_cop1() {
+    trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
 
-    write_register(EXE.rd_id, result);
 }
-void srl() 
-{
-    write_register(EXE.rd_id, EXE.rt >> EXE.shamt);
-}
-void srlv()
-{
-    uint8_t shamt = EXE.rs & 0b11111;
-    write_register(EXE.rd_id, EXE.rt >> shamt);
-}
-void sub()
-{
-    int64_t t1 = (int64_t)(int32_t)EXE.rs;
-    int64_t t2 = (int64_t)(int32_t)EXE.rt;
-    int64_t result = t1 - t2;
+void execute_cop2() {
+    trigger_trap(pc, EXCEPT_RESERVED_INSTRUCTION);
 
-    if (result > INT32_MAX || result < INT32_MIN)
-    {
-        trigger_trap(pc, EXCEPT_OVERFLOW);
-        return;
-    }
-    write_register(EXE.rd_id, (int32_t)result);
 }
-void subu()
-{
-    uint32_t result = EXE.rs - EXE.rt;
-    write_register(EXE.rd_id, result);
-}
-void sw()
-{
-    // TODO MEM
-}
-void sync()
-{
-    // nop
-}
-void synci()
-{
-    // nop
-}
-void syscall()
-{
-    trigger_trap(pc, EXCEPT_SYSCALL);
-    ID.noop = true;
-}
-void teq()
-{
-    if (EXE.rs == EXE.rt) {
-        trigger_trap(pc, EXCEPT_TRAP);
-    }
-}
-void tge()
-{
-    if ((int32_t)EXE.rs >= (int32_t)EXE.rt) {
-        trigger_trap(pc, EXCEPT_TRAP);
-    }
-}
-void tgeu()
-{
-    if (EXE.rs >= EXE.rt) {
-        trigger_trap(pc, EXCEPT_TRAP);
-    }
-}
-void tlt()
-{
-    if ((int32_t)EXE.rs < (int32_t)EXE.rt) {
-        trigger_trap(pc, EXCEPT_TRAP);
-    }
-}
-void tltu()
-{
-    if (EXE.rs < EXE.rt) {
-        trigger_trap(pc, EXCEPT_TRAP);
-    }
-}
-void tne()
-{
-    if (EXE.rs != EXE.rt) {
-        trigger_trap(pc, EXCEPT_TRAP);
-    }
-}
-void wsbh()
-{
-    uint32_t result =
-        ((EXE.rt & 0x00FF00FF) << 8)  |
-        ((EXE.rt & 0xFF00FF00) >> 8);
-    write_register(EXE.rd_id, result);
-}
-void xor()
-{
-    write_register(EXE.rd_id, EXE.rs ^ EXE.rt);
-}
-void xori()
-{
-    write_register(EXE.rt_id, EXE.rs ^ EXE.immediate_ze);
+
+
+// Helpers
+bool reads_mem(uint8_t op_code){
+    return false;
 }
