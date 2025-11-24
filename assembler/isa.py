@@ -1,73 +1,126 @@
 from typing import Final
 from enum import Enum
 
-class InstructionType(Enum):
-    R_TYPE = 0
-    I_TYPE = 1
-    J_TYPE = 2
-    PSEUDO = 3
+OP_SPECIAL = 0b000000
+OP_SPECIAL3 = 0b011111
+OP_PCREL = 0b111011
+FUNCT_BSHFL = 0b100000
 
 class InstructionData:
-    op_code: int = None
+    op_code:int = None
     funct_code:int = None
-    instruction_type: InstructionType = None
+    minor_op_code:int = None
+    bshfl_code:int = None
+    regimm_code:int = None
 
-    def __init__(self, instruction_type: InstructionType, op_code: int, funct_code: int = None):
+    def __init__(self, op_code: int, 
+                 funct_code: int = None, 
+                 minor_op_code: int = None,
+                 bshfl_code: int = None,
+                 regimm_code: int = None):
         self.op_code = op_code
-        self.instruction_type = instruction_type
         self.funct_code = funct_code
+        self.minor_op_code = minor_op_code
+        self.bshfl_code = bshfl_code
+        self.regimm_code = regimm_code
 
     def __repr__(self) -> str:
         return f'| op:{self.op_code}, funct:{self.funct_code}, type:{self.instruction_type} |'
 
 INSTRUCTIONS : Final[dict[str, int]] = {
-    'sll':      InstructionData(InstructionType.R_TYPE, 0x00, 0x00),
-    'srl':      InstructionData(InstructionType.R_TYPE, 0x00, 0x02),
-    'sra':      InstructionData(InstructionType.R_TYPE, 0x00, 0x03),
-    'jr':       InstructionData(InstructionType.R_TYPE, 0x00, 0x08),
-    'jalr':     InstructionData(InstructionType.R_TYPE, 0x00, 0x09),
-    'syscall':  InstructionData(InstructionType.R_TYPE, 0x00, 0x0C),
-    'mfhi':     InstructionData(InstructionType.R_TYPE, 0x00, 0x10),
-    'mthi':     InstructionData(InstructionType.R_TYPE, 0x00, 0x11),
-    'mflo':     InstructionData(InstructionType.R_TYPE, 0x00, 0x12),
-    'mtlo':     InstructionData(InstructionType.R_TYPE, 0x00, 0x13),
-    'mult':     InstructionData(InstructionType.R_TYPE, 0x00, 0x18),
-    'multu':    InstructionData(InstructionType.R_TYPE, 0x00, 0x19),
-    'div':      InstructionData(InstructionType.R_TYPE, 0x00, 0x1A),
-    'divu':     InstructionData(InstructionType.R_TYPE, 0x00, 0x1B),
-    'add':      InstructionData(InstructionType.R_TYPE, 0x00, 0x20),
-    'addu':     InstructionData(InstructionType.R_TYPE, 0x00, 0x21),
-    'sub':      InstructionData(InstructionType.R_TYPE, 0x00, 0x22),
-    'subu':     InstructionData(InstructionType.R_TYPE, 0x00, 0x23),
-    'and':      InstructionData(InstructionType.R_TYPE, 0x00, 0x24),
-    'or':       InstructionData(InstructionType.R_TYPE, 0x00, 0x25),
-    'xor':      InstructionData(InstructionType.R_TYPE, 0x00, 0x26),
-    'nor':      InstructionData(InstructionType.R_TYPE, 0x00, 0x27),
-    'slt':      InstructionData(InstructionType.R_TYPE, 0x00, 0x2A),
-    'sltu':     InstructionData(InstructionType.R_TYPE, 0x00, 0x2B),
-
-    'beq':      InstructionData(InstructionType.I_TYPE, 0x04),
-    'bne':      InstructionData(InstructionType.I_TYPE, 0x05),
-    'blez':     InstructionData(InstructionType.I_TYPE, 0x06),
-    'bgtz':     InstructionData(InstructionType.I_TYPE, 0x07),
-    'addi':     InstructionData(InstructionType.I_TYPE, 0x08),
-    'addiu':    InstructionData(InstructionType.I_TYPE, 0x09),
-    'slti':     InstructionData(InstructionType.I_TYPE, 0x0A),
-    'sltiu':    InstructionData(InstructionType.I_TYPE, 0x0B),
-    'andi':     InstructionData(InstructionType.I_TYPE, 0x0C),
-    'ori':      InstructionData(InstructionType.I_TYPE, 0x0D),
-    'lui':      InstructionData(InstructionType.I_TYPE, 0x0F),
-    'lb':       InstructionData(InstructionType.I_TYPE, 0x20), 
-    'lh':       InstructionData(InstructionType.I_TYPE, 0x21), 
-    'lw':       InstructionData(InstructionType.I_TYPE, 0x23), 
-    'lbu':      InstructionData(InstructionType.I_TYPE, 0x24),
-    'lhu':      InstructionData(InstructionType.I_TYPE, 0x25),
-    'sb':       InstructionData(InstructionType.I_TYPE, 0x28),
-    'sh':       InstructionData(InstructionType.I_TYPE, 0x29),
-    'sw':       InstructionData(InstructionType.I_TYPE, 0x2B),
-
-    'j':        InstructionData(InstructionType.J_TYPE, 0x02),
-    'jal':      InstructionData(InstructionType.J_TYPE, 0x03),
+    'add': InstructionData(OP_SPECIAL, funct_code=0b100000),
+    'addiu': InstructionData(0b001001),
+    'addiupc': InstructionData(OP_PCREL, minor_op_code=0b00),
+    'addu': InstructionData(OP_SPECIAL, funct_code=0b100001),
+    'align': InstructionData(OP_SPECIAL3, funct_code=FUNCT_BSHFL, bshfl_code=0b010),
+    'aluipc': InstructionData(OP_PCREL, minor_op_code=0b11111),
+    'and': InstructionData(OP_SPECIAL, funct_code=0b100100),
+    'andi': None,
+    'aui': None,
+    'auipc': InstructionData(OP_PCREL, minor_op_code=0b11110),
+    'balc': None,
+    'bc': None,
+    'beq': None,
+    'bgez': None,
+    'beqc': None,
+    'bnec': None,
+    'beqzc': None,
+    'bnezc': None,
+    'bgtz': None,
+    'bitswap': InstructionData(OP_SPECIAL3, funct_code=FUNCT_BSHFL, bshfl_code=0b00000),
+    'blez': None,
+    'bltz': None,
+    'bne': None,
+    'bovc': None,
+    'bnvc': None,
+    'break': None,
+    'clo': None,
+    'clz': None,
+    'div': None,
+    'mod': None,
+    'divu': None,
+    'modu': None,
+    'ehb': None,
+    'ext': None,
+    'ins': None,
+    'j': None,
+    'jal': None,
+    'jalr': None,
+    'jialc': None,
+    'jic': None,
+    'lb': None,
+    'lbu': None,
+    'lh': None,
+    'lhu': None,
+    'll': None,
+    'lsa': None,
+    'lw': None,
+    'lwpc': InstructionData(OP_PCREL, minor_op_code=0b01),
+    'mul': None,
+    'muh': None,
+    'mulu': None,
+    'muhu': None,
+    'nor': InstructionData(OP_SPECIAL, funct_code=0b100111),
+    'or': InstructionData(OP_SPECIAL, funct_code=0b100101),
+    'ori': None,
+    'pause': None,
+    'pref': None,
+    'rotr': None,
+    'rotrv': None,
+    'sb': None,
+    'sc': None,
+    'sdbbp': None,
+    'seb': InstructionData(OP_SPECIAL3, funct_code=FUNCT_BSHFL, bshfl_code=0b10000),
+    'seh': InstructionData(OP_SPECIAL3, funct_code=FUNCT_BSHFL, bshfl_code=0b11000),
+    'seleqz': None,
+    'selnez': None,
+    'sh': None,
+    'sigrie': None,
+    'sll': None,
+    'sllv': None,
+    'slt': InstructionData(OP_SPECIAL, funct_code=0b101010),
+    'slti': None,
+    'sltiu': None,
+    'sltu': InstructionData(OP_SPECIAL, funct_code=0b101011),
+    'sra': None,
+    'srav': None,
+    'srl': None,
+    'srlv': None,
+    'sub': InstructionData(OP_SPECIAL, funct_code=0b100010),
+    'subu': InstructionData(OP_SPECIAL, funct_code=0b100011),
+    'sw': None,
+    'sync': None,
+    'synci': None,
+    'syscall': None,
+    'teq': None,
+    'tge': None,
+    'tgeu': None,
+    'tlt': None,
+    'tltu': None,
+    'tne': None,
+    'wsbh': InstructionData(OP_SPECIAL3, funct_code=FUNCT_BSHFL, bshfl_code=0b00010),
+    'xor': InstructionData(OP_SPECIAL, funct_code=0b100110),
+    'xori': None,
 }
 
 PSEUDOINSTRUCTIONS = {

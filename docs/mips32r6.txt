@@ -39,7 +39,6 @@ jal
 jalr
 jialc
 jic
-jr
 lb
 lbu
 lh
@@ -95,6 +94,7 @@ xor
 xori
 
 # Psuedos
+jr
 b
 ble
 bge

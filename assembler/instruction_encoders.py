@@ -36,172 +36,239 @@ class Registers(Enum):
     fp = 30
     ra = 31
 
-
-     
-def build_instruction(ir_data: dict, rd=None, rs=None, rt=None, shamt=0, immediate=0, address=0) -> bytes:
-    op_code = int(ir_data['op']) if 'op' in ir_data else 0
-    funct = int(ir_data['funct']) if ir_data['funct'] else 0
-
-    def reg_map(reg: str) -> int:
-        reg = reg.strip('$')
-        if reg not in [reg.name for reg in Registers]:
-            raise SyntaxError(f'Unrecognized register "{reg}", line {ir_data["lineno"]}')
-        else:
-            return Registers[reg].value
-    
-    rd = reg_map(rd) if rd else 0
-    rs = reg_map(rs) if rs else 0
-    rt = reg_map(rt) if rt else 0
-
-    if (op_code in [0x00, 0x10]):
-        raw = op_code
-        raw = (raw << 5) | rs
-        raw = (raw << 5) | rt
-        raw = (raw << 5) | rd
-        raw = (raw << 5) | shamt
-        raw = (raw << 6) | funct
-        return struct.pack('>I', raw)
-    
-    elif (op_code in [0x02, 0x03]):
-        raw = op_code
-        raw = (raw << 26) | address
-        return struct.pack('>I', raw)
-    
+def reg_map(ir_data: dict, reg: str) -> int:
+    reg = reg.strip('$')
+    if reg not in [reg.name for reg in Registers]:
+        raise SyntaxError(f'Unrecognized register "{reg}", line {ir_data["lineno"]}')
     else:
-        raw = op_code
-        raw = (raw << 5)  | rs
-        raw = (raw << 5)  | rt
-        raw = (raw << 16) | immediate & 0xFFFF
-        return struct.pack('>I', raw)
-    
-def get_args(ir_data:dict, expected_args: list[str]) -> list[str]:
-    for arg in expected_args:
-        if arg not in ir_data:
-            raise SyntaxError(f"Line {ir_data['lineno']}: Invalid instruction arguments")
-    return [ir_data[arg] for arg in expected_args]
+        return Registers[reg].value
+
+def insert_bits(string, value, start_bit, length):
+    bits = f'{value:0{length}b}'
+    start = 31-start_bit
+    end = start+length-1
+    return string[:start] + bits + string[end:]
+
+def op_code(string, val):
+    return insert_bits(string, val, 31, 6)
+
+def rs(string, val):
+    return insert_bits(string, val, 25, 5)
+
+def rt(string, val):
+    return insert_bits(string, val, 20, 5)
+
+def rd(string, val):
+    return insert_bits(string, val, 15, 5)
+
+def sa(string, val):
+    return insert_bits(string, val, 10, 5)
+
+def funct(string, val):
+    return insert_bits(string, val, 5, 6)
+
+def immediate16(string, val):
+    return insert_bits(string, 0xFFFF & (val>>2), 15, 16)
+
+def immediate19(string, val):
+    return insert_bits(string, 0x7FFFF & (val>>2), 18, 19)
+
+def immediate26(string, val):
+    return insert_bits(string, 0x3FFFFFF & (val>>2), 25, 26)
+
+def code(string, val):
+    return insert_bits(string, 0xFFFF & val, 15, 16)
+
+def sa3(string, val):
+    return insert_bits(string, val, 10, 3)
+
+def bp(string, val):
+    return insert_bits(string, 0b11 & val, 7, 2)
+
+def pcrel_op2(string, val):
+    return insert_bits(string, val, 20, 2)
+
+def pcrel_op5(string, val):
+    return insert_bits(string, val, 20, 5)
 
 
-def encode_rd_rs_rt(ir_data: dict) -> bytes:
-    rd, rs, rt = get_args(ir_data, ['r0','r1','r2'])
-    return build_instruction(ir_data, rd=rd, rs=rs, rt=rt)
+def encode_rd_rs_rt(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = rd(reg_map(ir,ir["r0"]), bits)
+    bits = rs(reg_map(ir,ir["r1"]), bits)
+    bits = rt(reg_map(ir,ir["r2"]), bits)
+    bits = sa(0, bits)
+    bits = funct(ir["funct"], bits)
+    return bits
 
-def encode_rd_rt_shamt(ir_data: dict) -> bytes:
-    rd,rt,shamt = get_args(ir_data, ['r0','r1', 'immediate'])
-    shamt = shamt['val']
-    return build_instruction(ir_data, rd=rd, rt=rt, shamt=shamt)
-    
-def encode_rd_rt_rs(ir_data: dict) -> bytes:
-    rd,rt,rs = get_args(ir_data, ['r0','r1','r2'])
-    return build_instruction(ir_data, rd=rd, rt=rt, rs=rs)
+def encode_rt_rs_imm(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = rs(reg_map(ir,ir["r0"]), bits)
+    bits = rt(reg_map(ir,ir["r1"]), bits)
+    bits = immediate16(ir["imm"]["val"], bits)
+    return bits
 
-def encode_rs_rt(ir_data: dict) -> bytes:
-    rs,rt = get_args(ir_data, ['r0','r1'])
-    return build_instruction(ir_data, rs=rs, rt=rt)
+def encode_pcrel2(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = rs(reg_map(ir,ir["r0"]), bits)
+    bits = pcrel_op2(ir["minor_op"], bits)
+    bits = immediate19(ir["imm"]["val"], bits)
+    return bits
 
-def encode_rd(ir_data: dict) -> bytes:
-    rd = get_args(ir_data, ['r0'])[0]
-    return build_instruction(ir_data, rd=rd)
+def encode_pcrel5(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = rs(reg_map(ir,ir["r0"]), bits)
+    bits = pcrel_op5(ir["minor_op"], bits)
+    bits = immediate16(ir["imm"]["val"], bits)
+    return bits
 
-def encode_rs(ir_data: dict) -> bytes:
-    rs = get_args(ir_data, ['r0'])[0]
-    return build_instruction(ir_data, rs=rs)
+def encode_align(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = rd(reg_map(ir,ir["r0"]), bits)
+    bits = rs(reg_map(ir,ir["r1"]), bits)
+    bits = rt(reg_map(ir,ir["r2"]), bits)
+    bits = sa3(ir["bshfl"], bits)
+    bits = bp(ir["imm"]["val"], bits)
+    bits = funct(ir["funct"], bits)
+    return bits
 
-def encode_rd_rs(ir_data: dict) -> bytes:
-    rd, rs = get_args(ir_data, ['r0', 'r1'])
-    return build_instruction(ir_data, rd=rd, rs=rs)
+def encode_special3_rd_rt(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = rs(0, bits)
+    bits = rd(reg_map(ir,ir["r0"]), bits)
+    bits = rt(reg_map(ir,ir["r1"]), bits)
+    bits = sa(ir["bshfl"], bits)
+    bits = funct(ir["funct"], bits)
+    return bits
 
-def encode_rt_rs_imm(ir_data: dict) -> bytes:
-    rt, rs, imm = get_args(ir_data, ['r0', 'r1', 'immediate'])
-    imm = imm['val']
-    return build_instruction(ir_data, rt=rt, rs=rs, immediate=imm)
+def encode_unconditional_branch(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = immediate26(ir["imm"]["val"], bits)
+    return bits
 
-def encode_rt_offset_rs(ir_data: dict) -> bytes:
-    rt, rs, imm = get_args(ir_data, ['r0', 'r1', 'immediate'])
-    imm = imm['val']
-    return build_instruction(ir_data, rt=rt, immediate=imm, rs=rs)
+def encode_rs_rt_offset16(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = rs(reg_map(ir,ir["r0"]), bits)
+    bits = rt(reg_map(ir,ir["r1"]), bits)
+    bits = immediate16(ir["imm"]["val"], bits)
+    return bits
 
-def encode_rt_imm(ir_data: dict) -> bytes:
-    rt, imm = get_args(ir_data, ['r0', 'immediate'])
-    imm = imm['val']
-    return build_instruction(ir_data, rt=rt, immediate=imm)
+def encode_regimm_rs_offset(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = rs(reg_map(ir,ir["r0"]), bits)
+    bits = rt(ir["regimm"], bits)
+    bits = immediate16(ir["imm"]["val"], bits)
+    return bits
 
-def encode_rs_rt_offset(ir_data: dict) -> bytes:
-    rs, rt, imm = get_args(ir_data, ['r0', 'r1', 'immediate'])
-    addr = imm['val']
-    offset = addr - ir_data['addr'] - 4
-    offset = offset >> 2
-    return build_instruction(ir_data, rs=rs, rt=rt, immediate=offset)
-
-def encode_rs_offset(ir_data: dict) -> bytes:
-    rs, imm = get_args(ir_data, ['r0', 'immediate'])
-    addr = imm['val']
-    offset = addr - ir_data['addr'] - 4
-    offset = offset >> 2
-    return build_instruction(ir_data, rs=rs, immediate=offset)
-
-def encode_addr(ir_data: dict) -> bytes:
-    imm = get_args(ir_data, ['immediate'])[0]
-    addr = imm['val'] >> 2
-    return build_instruction(ir_data, address=addr)
-
-def encode_jalr(ir_data: dict) -> bytes:
-    if 'r0' in ir_data and 'r1' not in ir_data:
-        # implicit rd=$ra
-        rs = get_args(ir_data, ['r0'])[0]
-        rd = '$ra'
-    else:
-        rd, rs = get_args(ir_data, ['r0','r1'])
-
-    return build_instruction(ir_data, rs=rs, rd=rd)
-
-def encode_noargs(ir_data: dict) -> bytes:
-    return build_instruction(ir_data)
-
+def encode_sigrie(ir):
+    bits = "0"*32
+    bits = op_code(ir["op"], bits)
+    bits = rs(0, bits)
+    bits = rt(ir["regimm"], bits)
+    bits = code(ir["imm"]["val"], bits)
+    return bits
 
 INSTRUCTION_ENCODERS: Final[dict[str, Callable[[str], bytes]]] = {
-    'sll':      encode_rd_rt_shamt,
-    'srl':      encode_rd_rt_shamt,
-    'sra':      encode_rd_rt_shamt,
-    'jr':       encode_rs,
-    'jalr':     encode_jalr,
-    'syscall':  encode_noargs,
-    'mfhi':     encode_rd,
-    'mthi':     encode_rs,
-    'mflo':     encode_rd,
-    'mtlo':     encode_rs,
-    'mult':     encode_rs_rt,
-    'multu':    encode_rs_rt,
-    'div':      encode_rs_rt,
-    'divu':     encode_rs_rt,
-    'add':      encode_rd_rs_rt,
-    'addu':     encode_rd_rs_rt,
-    'sub':      encode_rd_rs_rt,
-    'subu':     encode_rd_rs_rt,
-    'and':      encode_rd_rs_rt,
-    'or':       encode_rd_rs_rt,
-    'xor':      encode_rd_rs_rt,
-    'nor':      encode_rd_rs_rt,
-    'slt':      encode_rd_rs_rt,
-    'sltu':     encode_rd_rs_rt,
-    'beq':      encode_rs_rt_offset,
-    'bne':      encode_rs_rt_offset,
-    'blez':     encode_rs_offset,
-    'bgtz':     encode_rs_offset,
-    'addi':     encode_rt_rs_imm,
-    'addiu':    encode_rt_rs_imm,
-    'slti':     encode_rt_rs_imm,
-    'sltiu':    encode_rt_rs_imm,
-    'andi':     encode_rt_rs_imm,
-    'ori':      encode_rt_rs_imm,
-    'lui':      encode_rt_imm,
-    'lb':       encode_rt_offset_rs, 
-    'lh':       encode_rt_offset_rs, 
-    'lw':       encode_rt_offset_rs, 
-    'lbu':      encode_rt_offset_rs,
-    'lhu':      encode_rt_offset_rs,
-    'sb':       encode_rt_offset_rs,
-    'sh':       encode_rt_offset_rs,
-    'sw':       encode_rt_offset_rs,
-    'j':        encode_addr,
-    'jal':      encode_addr,
+    'add': encode_rd_rs_rt,
+    'addiu': encode_rt_rs_imm,
+    'addiupc': pcrel_op2,
+    'addu': encode_rd_rs_rt,
+    'align': encode_align,
+    'aluipc': encode_pcrel5,
+    'and': encode_rd_rs_rt,
+    'andi': encode_rt_rs_imm,
+    'aui': encode_rt_rs_imm,
+    'auipc': encode_pcrel5,
+    'balc': encode_unconditional_branch,
+    'bc': encode_unconditional_branch,
+    'beq': encode_rs_rt_offset16,
+    'bgez': encode_regimm_rs_offset,
+    'beqc': None,
+    'bnec': None,
+    'beqzc': None,
+    'bnezc': None,
+    'bgtz': None,
+    'bitswap': encode_special3_rd_rt,
+    'blez': None,
+    'bltz': encode_regimm_rs_offset,
+    'bne': None,
+    'bovc': None,
+    'bnvc': None,
+    'break': None,
+    'clo': None,
+    'clz': None,
+    'div': None,
+    'mod': None,
+    'divu': None,
+    'modu': None,
+    'ehb': None,
+    'ext': None,
+    'ins': None,
+    'j': None,
+    'jal': None,
+    'jalr': None,
+    'jialc': None,
+    'jic': None,
+    'lb': None,
+    'lbu': None,
+    'lh': None,
+    'lhu': None,
+    'll': None,
+    'lsa': None,
+    'lw': None,
+    'lwpc': encode_pcrel2,
+    'mul': None,
+    'muh': None,
+    'mulu': None,
+    'muhu': None,
+    'nor': encode_rd_rs_rt,
+    'or': encode_rd_rs_rt,
+    'ori': encode_rt_rs_imm,
+    'pause': None,
+    'pref': None,
+    'rotr': None,
+    'rotrv': None,
+    'sb': None,
+    'sc': None,
+    'sdbbp': None,
+    'seb': encode_special3_rd_rt,
+    'seh': encode_special3_rd_rt,
+    'seleqz': None,
+    'selnez': None,
+    'sh': None,
+    'sigrie': encode_sigrie,
+    'sll': None,
+    'sllv': None,
+    'slt': encode_rd_rs_rt,
+    'slti': encode_rt_rs_imm,
+    'sltiu': encode_rt_rs_imm,
+    'sltu': encode_rd_rs_rt,
+    'sra': None,
+    'srav': None,
+    'srl': None,
+    'srlv': None,
+    'sub': encode_rd_rs_rt,
+    'subu': encode_rd_rs_rt,
+    'sw': None,
+    'sync': None,
+    'synci': None,
+    'syscall': None,
+    'teq': None,
+    'tge': None,
+    'tgeu': None,
+    'tlt': None,
+    'tltu': None,
+    'tne': None,
+    'wsbh': encode_special3_rd_rt,
+    'xor': encode_rd_rs_rt,
+    'xori': encode_rt_rs_imm,
 }
