@@ -27,11 +27,10 @@ from textual.containers import HorizontalGroup
 from assembler.assemble import assemble
 
 
-
+EMULATOR_EXECUTABLE_PATH = os.path.join('.', 'emulator', 'mips_sim')
 
 stdout = sys.stdout
 stderr = sys.stderr
-
 
 
 class ToolbarButton(Button):
@@ -156,7 +155,6 @@ def assemble_current_text():
             print(e)
             print("Fail")
 
-        
     sys.stdout = stdout
     sys.stderr = stderr
 
@@ -169,7 +167,8 @@ def run_emulator():
     log.write_line("Running...")
 
     with open('emulator_output.log', 'w') as f_out:
-        subprocess.run('.\\emulator\\mips_sim.exe tmp.bin', stdout=f_out, stderr=f_out)
+        emulator_executable_path = os.path.join('.', 'emulator', 'mips_sim')
+        subprocess.run([emulator_executable_path, 'tmp.bin'], stdout=f_out, stderr=f_out)
 
     with open('emulator_output.log', 'r') as f_out:
         log.write_lines(f_out.readlines())
